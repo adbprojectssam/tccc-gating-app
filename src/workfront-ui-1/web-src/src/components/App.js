@@ -2,43 +2,45 @@
  * <license header>
  */
 
-import React from "react";
-import ErrorBoundary from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { Provider } from "@react-spectrum/s2";
 import ExtensionRegistration from "./ExtensionRegistration";
-
 
 import Projectstatus from "./ProjectstatusMainMenuItem";
 
 function App() {
   return (
-    <Router>
-      <ErrorBoundary onError={onError} FallbackComponent={fallbackComponent}>
-        <Routes>
-          <Route index element={<ExtensionRegistration />} />    
-          <Route exact path="index.html" element={<ExtensionRegistration />} />  
-          {/* @todo YOUR CUSTOM ROUTES SHOULD BE HERE */}          
-          <Route
-            exact path="project-status"
-            element={<Projectstatus />}
-          />
-        </Routes>
-      </ErrorBoundary>
-    </Router>
-  )
+    <Provider background="base">
+      <Router>
+        <ErrorBoundary onError={onError} FallbackComponent={fallbackComponent}>
+          <Routes>
+            <Route index element={<ExtensionRegistration />} />
+            <Route
+              exact
+              path="index.html"
+              element={<ExtensionRegistration />}
+            />
+            {/* @todo YOUR CUSTOM ROUTES SHOULD BE HERE */}
+            <Route exact path="project-status" element={<Projectstatus />} />
+          </Routes>
+        </ErrorBoundary>
+      </Router>
+    </Provider>
+  );
 
   // error handler on UI rendering failure
-  function onError(e, componentStack) {}
+  function onError(e, info) {}
 
   // component to show if UI fails rendering
-  function fallbackComponent({ componentStack, error }) {
+  function fallbackComponent({ error, resetErrorBoundary }) {
     return (
-      <React.Fragment>
+      <>
         <h1 style={{ textAlign: "center", marginTop: "20px" }}>
           Phly, phly... Something went wrong :(
         </h1>
-        <pre>{componentStack + "\n" + error.message}</pre>
-      </React.Fragment>
+        <pre>{error.message}</pre>
+      </>
     );
   }
 }

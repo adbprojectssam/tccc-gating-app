@@ -2,7 +2,7 @@
  * <license header>
  */
 
-import { Text } from "@adobe/react-spectrum";
+import { Text } from "@react-spectrum/s2";
 import { register } from "@adobe/uix-guest";
 import { extensionId } from "./Constants";
 import metadata from '../../../../app-metadata.json';

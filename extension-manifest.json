@@ -1,0 +1,12 @@
+{
+  "name": "Gating App",
+  "id": "gating-app",
+  "description": "TCCC Gating App for reviews and approvals process",
+  "version": "0.0.1",
+  "mainMenuItems": [
+    {
+      "label": "Project Status",
+      "id": "project-status"
+    }
+  ]
+}

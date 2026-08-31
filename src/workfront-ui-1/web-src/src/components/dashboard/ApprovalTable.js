@@ -14,8 +14,10 @@ import {
   Button,
 } from '@react-spectrum/s2';
 import SectionCard from './SectionCard';
-import { fullWidth } from './styles';
+import { fullWidth, dateCellText } from './styles';
 import { getIcon } from './iconRegistry';
+
+const Calendar = getIcon('calendar');
 
 /** Initials avatar for mock mode — swap for S2 <Avatar src> once we have image URLs. */
 function AvatarCircle({ name }) {
@@ -37,13 +39,26 @@ function renderCell(row, columnId) {
       </div>
     );
   }
+  if (columnId === 'date') {
+    // Figma date cell: leading Calendar icon (#505050) + date text.
+    return (
+      <div className="es-datecell">
+        {Calendar && (
+          <span className="es-datecell__icon" aria-hidden="true">
+            <Calendar />
+          </span>
+        )}
+        <span className={dateCellText}>{row.date}</span>
+      </div>
+    );
+  }
   if (columnId === 'status') {
     // A row can carry a single status (StatusLight) or a set of status pills.
     if (Array.isArray(row.statuses)) {
       return (
         <div className="es-status-pills">
           {row.statuses.map((status, index) => (
-            <Badge key={index} variant={status.tone}>
+            <Badge key={index} variant={status.tone} fillStyle="subtle" size="S">
               {status.label}
             </Badge>
           ))}
@@ -77,7 +92,7 @@ function ApprovalTable({ data, onHeaderAction }) {
       </Button>
     );
   } else if (data.status) {
-    action = <Badge variant={data.status.tone}>{data.status.label}</Badge>;
+    action = <Badge variant={data.status.tone} fillStyle="subtle">{data.status.label}</Badge>;
   }
 
   return (

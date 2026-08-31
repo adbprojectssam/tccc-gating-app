@@ -6,6 +6,8 @@
  * Tiny bar sparkline rendered as inline SVG from a numeric array.
  * No charting dependency — swap for a real chart lib later if needed.
  */
+import { chartCaption } from './styles';
+
 function MiniBars({ data = [], caption, ariaLabel }) {
   const width = 132;
   const height = 44;
@@ -38,7 +40,7 @@ function MiniBars({ data = [], caption, ariaLabel }) {
           );
         })}
       </svg>
-      {caption && <span className="es-minibars__caption">{caption}</span>}
+      {caption && <span className={`es-minibars__caption ${chartCaption}`}>{caption}</span>}
     </div>
   );
 }

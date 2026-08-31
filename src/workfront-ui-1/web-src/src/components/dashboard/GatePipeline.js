@@ -4,6 +4,9 @@
 
 import {
   sectionTitle,
+  stepLabel,
+  stepStatus,
+  markerGlyph,
   markerCompleted,
   markerCurrent,
   markerAttention,
@@ -52,12 +55,12 @@ function GatePipeline({ data, selectedKey, onGateSelect }) {
                 aria-current={isSelected ? 'step' : undefined}
                 onClick={() => onGateSelect && onGateSelect(id)}
               >
-                <span className={`es-step__marker ${MARKER_TOKENS[markerState]}`} aria-hidden="true">
+                <span className={`es-step__marker ${markerGlyph} ${MARKER_TOKENS[markerState]}`} aria-hidden="true">
                   {gate.status === 'completed' ? '✓' : gate.number}
                 </span>
                 <span className="es-step__text">
-                  <span className="es-step__label">{gate.label}</span>
-                  <span className="es-step__status">{gate.statusLabel}</span>
+                  <span className={`es-step__label ${stepLabel}`}>{gate.label}</span>
+                  <span className={`es-step__status ${stepStatus}`}>{gate.statusLabel}</span>
                 </span>
               </button>
               {index < gates.length - 1 && <span className="es-step__line" aria-hidden="true" />}

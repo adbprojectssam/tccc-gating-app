@@ -1,0 +1,38 @@
+/*
+ * Adobe Clean — local static weights.
+ *
+ * Spectrum 2's `sans` font token resolves to the family chain:
+ *   adobe-clean-spectrum-vf, adobe-clean-variable, adobe-clean, ui-sans-serif, …
+ * We register the static "adobe-clean" family (last real Adobe family in that
+ * chain) so S2 typography renders in Adobe Clean instead of the system-ui
+ * fallback — the fallback's wider metrics were causing text wrapping / overflow
+ * that didn't match Figma.
+ */
+@font-face {
+  font-family: 'adobe-clean';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/AdobeClean-Regular.otf') format('opentype');
+}
+@font-face {
+  font-family: 'adobe-clean';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/AdobeClean-Medium.otf') format('opentype');
+}
+@font-face {
+  font-family: 'adobe-clean';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/AdobeClean-Bold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'adobe-clean';
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('./fonts/AdobeClean-Black.otf') format('opentype');
+}

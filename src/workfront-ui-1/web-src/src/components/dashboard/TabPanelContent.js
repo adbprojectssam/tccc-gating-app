@@ -2,6 +2,7 @@
  * <license header>
  */
 
+import { Badge } from '@react-spectrum/s2';
 import { getIcon } from './iconRegistry';
 import { cardTitle, bodyText } from './styles';
 
@@ -43,9 +44,9 @@ function TabPanelContent({ panel }) {
           {panel.risks.map((risk) => (
             <div key={risk.id} className="es-tabpanel__item es-tabpanel__item--risk">
               <span className={`es-tabpanel__risk-title ${bodyText}`}>{risk.title}</span>
-              <span className={`es-risk-badge es-risk-badge--${risk.severity.tone}`}>
+              <Badge variant={risk.severity.tone} fillStyle="subtle">
                 {risk.severity.label}
-              </span>
+              </Badge>
             </div>
           ))}
         </div>

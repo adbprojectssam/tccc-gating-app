@@ -3,7 +3,7 @@
  */
 
 import { ProgressBar, StatusLight } from '@react-spectrum/s2';
-import { fullWidth, cardSurface, cardTitle, detailText } from './styles';
+import { progressWidth, cardSurface, cardTitle, detailText } from './styles';
 
 /** Readiness checklist with a completion progress bar and optional legend. */
 function GateReadiness({ data }) {
@@ -16,8 +16,8 @@ function GateReadiness({ data }) {
     <section className={`es-readiness es-card--accent ${cardSurface}`}>
       <div className="es-readiness__head">
         <h2 className={`es-card__title ${cardTitle}`}>{data.title}</h2>
+        <ProgressBar styles={progressWidth} aria-label={`${data.title} progress`} value={percent} />
         <span className={`es-readiness__count ${detailText}`}>{`${completed} of ${total} complete`}</span>
-        <ProgressBar styles={fullWidth} aria-label={`${data.title} progress`} value={percent} />
       </div>
 
       <ul className="es-readiness__list">

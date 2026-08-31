@@ -2,7 +2,7 @@
  * <license header>
  */
 
-import { InlineAlert, Heading, Content, Button, Link } from '@react-spectrum/s2';
+import { InlineAlert, Heading, Content, Button, Link, Badge, Text } from '@react-spectrum/s2';
 import SectionCard from './SectionCard';
 import { getIcon } from './iconRegistry';
 
@@ -34,10 +34,10 @@ function AIRecommendation({ data, onAsk, onAction }) {
           {data.factors.map((factor) => {
             const Icon = getIcon(factor.icon);
             return (
-              <span key={factor.id} className={`es-factor es-factor--${factor.tone}`}>
+              <Badge key={factor.id} variant={factor.tone} fillStyle="subtle" size="S">
                 {Icon && <Icon />}
-                <span>{factor.label}</span>
-              </span>
+                <Text>{factor.label}</Text>
+              </Badge>
             );
           })}
         </div>

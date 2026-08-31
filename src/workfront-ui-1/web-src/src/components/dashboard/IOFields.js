@@ -8,23 +8,24 @@ import {
   Picker,
   PickerItem,
   DatePicker,
-  Link,
-  InlineAlert,
-  Heading,
-  Content,
 } from '@react-spectrum/s2';
 import SectionCard from './SectionCard';
-import { fullWidth } from './styles';
+import { getIcon } from './iconRegistry';
+import { fullWidth, bannerBody, linkText } from './styles';
+
+const InfoCircle = getIcon('infoCircle');
 
 /**
  * Configurable IO fields section. Renders one input per field based on
  * `field.type` (text | textarea | select | date), honoring `required`,
  * `placeholder`, `isReadOnly` and `value`. Reused for both Gate 1 (read-only,
  * locked "Business Case") and Gate 2 (editable, required "Margin Guidance").
+ * Fields are size "L" (16px) to match Figma "Text field (L)".
  */
 function renderField(field) {
   const common = {
     styles: fullWidth,
+    size: 'L',
     label: field.label,
     isRequired: field.required,
     necessityIndicator: field.required ? 'icon' : undefined,
@@ -71,10 +72,11 @@ function renderField(field) {
 function IOFields({ data }) {
   if (!data) return null;
 
+  // Figma "Open in Workfront" link: dark (#292929), medium, underlined.
   const action = data.workfrontUrl ? (
-    <Link href={data.workfrontUrl} target="_blank">
+    <a className={`es-link ${linkText}`} href={data.workfrontUrl} target="_blank" rel="noreferrer">
       {data.workfrontLabel}
-    </Link>
+    </a>
   ) : null;
 
   return (
@@ -82,10 +84,16 @@ function IOFields({ data }) {
       <div className="es-fields">{(data.fields || []).map(renderField)}</div>
 
       {data.locked && (
-        <InlineAlert variant="informative">
-          <Heading>{data.lockedTitle || 'Locked'}</Heading>
-          <Content>{data.lockedMessage}</Content>
-        </InlineAlert>
+        <div className="es-banner es-banner--info es-banner--row">
+          <p className={`es-banner__body ${bannerBody}`}>
+            {data.lockedTitle ? `${data.lockedTitle} - ${data.lockedMessage}` : data.lockedMessage}
+          </p>
+          {InfoCircle && (
+            <span className="es-banner__icon" aria-hidden="true">
+              <InfoCircle />
+            </span>
+          )}
+        </div>
       )}
     </SectionCard>
   );

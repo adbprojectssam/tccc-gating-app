@@ -18,7 +18,7 @@ function KeyKPIs({ data }) {
               <div className={`es-kpi__name ${bodyText}`}>{item.name}</div>
               <div className={`es-kpi__detail ${detailText}`}>{item.detail}</div>
             </div>
-            {item.status && <Badge variant={item.status.tone}>{item.status.label}</Badge>}
+            {item.status && <Badge variant={item.status.tone} fillStyle="subtle" size="S">{item.status.label}</Badge>}
           </li>
         ))}
       </ul>

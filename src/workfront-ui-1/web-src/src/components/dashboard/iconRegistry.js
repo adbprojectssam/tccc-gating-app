@@ -14,6 +14,9 @@ import Slideshow from '@react-spectrum/s2/icons/Slideshow';
 import AlertTriangle from '@react-spectrum/s2/icons/AlertTriangle';
 import Education from '@react-spectrum/s2/icons/Education';
 import Checkmark from '@react-spectrum/s2/icons/Checkmark';
+import CheckmarkCircle from '@react-spectrum/s2/icons/CheckmarkCircle';
+import InfoCircle from '@react-spectrum/s2/icons/InfoCircle';
+import Calendar from '@react-spectrum/s2/icons/Calendar';
 import Close from '@react-spectrum/s2/icons/Close';
 import Settings from '@react-spectrum/s2/icons/Settings';
 
@@ -26,6 +29,9 @@ const registry = {
   alertTriangle: AlertTriangle, // Risk View tab + Need Attention CTA
   education: Education, // Learning Plan tab
   checkmark: Checkmark, // completed factor chip + learning checklist
+  checkmarkCircle: CheckmarkCircle, // "Approved Unanimously" banner (Figma: S2_Icon_CheckmarkCircle)
+  infoCircle: InfoCircle, // "Locked" info banner (Figma: S2_Icon_InfoCircle)
+  calendar: Calendar, // Approval table date column (Figma: S2_Icon_Calendar)
   close: Close, // blocked factor chip
   settings: Settings, // Configure Approvers
 };

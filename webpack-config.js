@@ -14,6 +14,11 @@ module.exports = {
         test: /\.ts?$/,
         exclude: /node_modules/,
         use: 'ts-loader'
+      },
+      {
+        // Bundle/serve local font files referenced via url() in @font-face.
+        test: /\.(otf|ttf|woff2?)$/,
+        type: 'asset/resource'
       }
     ]
   },

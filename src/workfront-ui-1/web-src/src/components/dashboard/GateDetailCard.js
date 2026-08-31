@@ -3,17 +3,16 @@
  */
 
 import {
-  InlineAlert,
-  Heading,
-  Content,
-  Link,
   Badge,
   Picker,
   PickerItem,
   TextArea,
 } from '@react-spectrum/s2';
 import SectionCard from './SectionCard';
-import { fullWidth, bodyText, detailText } from './styles';
+import { getIcon } from './iconRegistry';
+import { fullWidth, stageText, detailText, bannerTitle, bannerBody, linkText } from './styles';
+
+const CheckmarkCircle = getIcon('checkmarkCircle');
 
 /** Current gate detail: status banner, stage, tags and PMO comments. */
 function GateDetailCard({ gate, onLiveStatusChange }) {
@@ -37,23 +36,27 @@ function GateDetailCard({ gate, onLiveStatusChange }) {
   return (
     <SectionCard title={gate.title} subtitle={gate.target} action={action}>
       {gate.approval && (
-        <InlineAlert variant={gate.approval.tone || 'positive'}>
-          <Heading>{gate.approval.title}</Heading>
-          <Content>
-            {gate.approval.detail}
-            {gate.approval.linkLabel && (
-              <>
-                {' '}
-                <Link href={gate.approval.linkHref || '#'}>{gate.approval.linkLabel}</Link>
-              </>
+        <div className="es-banner es-banner--positive">
+          <div className="es-banner__head">
+            <span className={`es-banner__title ${bannerTitle}`}>{gate.approval.title}</span>
+            {CheckmarkCircle && (
+              <span className="es-banner__icon" aria-hidden="true">
+                <CheckmarkCircle />
+              </span>
             )}
-          </Content>
-        </InlineAlert>
+          </div>
+          <p className={`es-banner__body ${bannerBody}`}>{gate.approval.detail}</p>
+          {gate.approval.linkLabel && (
+            <a className={`es-link ${linkText}`} href={gate.approval.linkHref || '#'}>
+              {gate.approval.linkLabel}
+            </a>
+          )}
+        </div>
       )}
 
       {gate.stage && (
         <div className="es-stage">
-          <p className={`es-stage__title ${bodyText}`}>
+          <p className={`es-stage__title ${stageText}`}>
             <strong>{gate.stage.label}</strong> {gate.stage.text}
           </p>
           {(gate.stage.statusLabel || gate.stage.approvedOn) && (
@@ -69,7 +72,7 @@ function GateDetailCard({ gate, onLiveStatusChange }) {
           {gate.tags && gate.tags.length > 0 && (
             <div className="es-tag-row">
               {gate.tags.map((tag) => (
-                <Badge key={tag} variant="neutral">
+                <Badge key={tag} variant="neutral" fillStyle="subtle" size="S">
                   {tag}
                 </Badge>
               ))}

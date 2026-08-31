@@ -32,16 +32,16 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
   const pipeline = project && project.pipeline;
   const defaultGate = (pipeline && pipeline.currentKey) || project?.defaultGate || '1';
 
-  // View tabs: nothing selected initially; clicking the active tab again
-  // deselects it (toggle), which hides the content box below.
+  // Nothing selected initially (matches Figma's resting state). S2 <Tabs> forces
+  // a selection, so we use a toggle strip: click a tab to open its panel, click
+  // it again to close.
   const [activeTabId, setActiveTabId] = useState(null);
-  const [selectedGate, setSelectedGate] = useState(String(defaultGate));
+  const [selectedGate, setSelectedGate] = useState('1');
   const [isAttentionOpen, setAttentionOpen] = useState(false);
 
   if (!project) return null;
   const tabs = project.tabs || [];
   const activeTab = tabs.find((tab) => tab.id === activeTabId);
-
   const toggleTab = (id) => setActiveTabId((current) => (current === id ? null : id));
 
   const gate = (project.gateData && project.gateData[selectedGate]) || {};

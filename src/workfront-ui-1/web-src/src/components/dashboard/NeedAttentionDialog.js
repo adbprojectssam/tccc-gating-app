@@ -3,7 +3,7 @@
  */
 
 import { CustomDialog, CloseButton, Button } from '@react-spectrum/s2';
-import { dialogTitle } from './styles';
+import { dialogTitle, attentionText, dashboardBase } from './styles';
 
 /**
  * "Need Attention" modal — Figma "Standard dialog (M)" with BOTH a dismiss X and
@@ -15,13 +15,15 @@ function NeedAttentionDialog({ data, onPrimaryAction }) {
   if (!data) return null;
   return (
     <CustomDialog size="M" isDismissible padding="none">
-      <div className="es-attention">
+      {/* Dialog renders in a portal outside .es-dashboard, so re-apply the sans
+          (Adobe Clean) font here — otherwise custom text falls back to serif. */}
+      <div className={`es-attention ${dashboardBase}`}>
         <div className="es-attention__close">
           <CloseButton />
         </div>
         <div className="es-attention__head">
           <h2 className={`es-attention__title ${dialogTitle}`}>{data.title}</h2>
-          <ol className="es-attention-list">
+          <ol className={`es-attention-list ${attentionText}`}>
             {(data.items || []).map((item, index) => (
               <li key={index}>{item}</li>
             ))}
@@ -31,6 +33,7 @@ function NeedAttentionDialog({ data, onPrimaryAction }) {
           <div className="es-attention__footer">
             <Button
               variant="secondary"
+              fillStyle="outline"
               onPress={() => onPrimaryAction && onPrimaryAction(data.primaryAction.id)}
             >
               {data.primaryAction.label}

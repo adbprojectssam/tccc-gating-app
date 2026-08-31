@@ -7,6 +7,7 @@ import 'core-js/stable'
 import { createRoot } from 'react-dom/client'
 
 import App from './components/App'
+import './fonts.css'
 import '@react-spectrum/s2/page.css'
 import './index.css'
 

@@ -11,7 +11,7 @@ import Projectstatus from "./ProjectstatusMainMenuItem";
 
 function App() {
   return (
-    <Provider background="base">
+    <Provider colorScheme="light" background="base">
       <Router>
         <ErrorBoundary onError={onError} FallbackComponent={fallbackComponent}>
           <Routes>

@@ -11,44 +11,50 @@
  * rendered. Each section is optional — a component renders only when its slice
  * is present — so gates can differ (Gate 1 has no AI/KPI sections, Gate 2 does).
  *
+ * Static UI text (button/tab/section names, column & field labels, chart
+ * captions, link text, status vocabulary) comes from `LABELS` — see
+ * `constants/labels.js`. Only dynamic, data-bound values live inline here.
+ *
  * When real APIs are ready, replace this object with the fetched payload (same
  * shape). No component changes required.
  */
+import { LABELS, formatLabel } from '../constants/labels';
+
 export const sampleProject = {
   header: {
     title: 'LA-MX-BODYARMOR ZERO_LAOU',
     subtitle: 'Brazil · Sparkling Flavors · Peter William',
     actions: [
-      { id: 'pre-read', label: 'Pre-read', variant: 'primary', fillStyle: 'fill', icon: 'tutorials' },
-      { id: 'pre-read-slides', label: 'Pre-read Slides', variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
-      { id: 'need-attention', label: 'Need Attention', variant: 'negative', fillStyle: 'fill', icon: 'alertTriangle' },
+      { id: 'pre-read', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'tutorials' },
+      { id: 'pre-read-slides', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
+      { id: 'need-attention', label: LABELS.actions.needAttention, variant: 'negative', fillStyle: 'fill', icon: 'alertTriangle' },
     ],
   },
 
   // Modal shown when the "Need Attention" header CTA is clicked.
   needAttention: {
-    title: '2 Items need attention',
+    title: formatLabel(LABELS.templates.itemsNeedAttention, { count: 2 }),
     items: [
       'Margin analysis overdue since June 12 - blocking FIN sign-off',
       'TECH feasibility in review - sign-off pending',
     ],
-    primaryAction: { id: 'open-risk-view', label: 'Open full risk view' },
+    primaryAction: { id: 'open-risk-view', label: LABELS.actions.openFullRiskView },
   },
 
   tabs: [
     {
       id: 'executive-summary',
-      label: 'Executive Summary',
+      label: LABELS.tabs.executiveSummary,
       icon: 'file',
       panel: {
-        heading: 'Executive Summary',
+        heading: LABELS.tabs.executiveSummary,
         paragraph:
           "Coca-Cola Zero Sugar - Cherry is a new flavor extension filling a gap in Coca-Cola Zero Sugar's flavor lineup for Brazil. Currently at Gate 2 - Decision to develop, flagged Needs Attention: margin analysis is overdue and TECH sign-off is pending, so the AI recommends a hold. Volume is tracking ahead of plan (80k UC, +23% vs Gate 1) with a healthy margin profile (34% GP, +3pts vs benchmark). No CapEx required. Next gate target: February 2027.",
       },
     },
     {
       id: 'learning-plan',
-      label: 'Learning Plan',
+      label: LABELS.tabs.learningPlan,
       icon: 'education',
       panel: {
         heading: 'Learning plan - what this gate is testing',
@@ -62,10 +68,10 @@ export const sampleProject = {
     },
     {
       id: 'risk-view',
-      label: 'Risk View',
+      label: LABELS.tabs.riskView,
       icon: 'alertTriangle',
       panel: {
-        heading: 'Risk View',
+        heading: LABELS.tabs.riskView,
         summary: { strong: '4 open risks', rest: '- 1 high, 3 medium' },
         risks: [
           { id: 'margin', title: 'Margin analysis overdue since June 12 - blocking FIN sign-off', severity: { label: 'High', tone: 'negative' } },
@@ -78,16 +84,16 @@ export const sampleProject = {
   ],
 
   pipeline: {
-    title: 'Gate Pipeline',
+    title: LABELS.sections.gatePipeline,
     // The gate whose marker renders as "current" (solid dark), and the view
     // shown on load.
     currentKey: '2',
     gates: [
-      { number: 1, label: 'Gate 1', status: 'completed', statusLabel: 'Completed' },
-      { number: 2, label: 'Gate 2', status: 'attention', statusLabel: 'Need Attention' },
-      { number: 3, label: 'Gate 3', status: 'not-started', statusLabel: 'Not Started' },
-      { number: 4, label: 'Gate 4', status: 'not-started', statusLabel: 'Not Started' },
-      { number: 5, label: 'Gate 5', status: 'not-started', statusLabel: 'Not Started' },
+      { number: 1, label: 'Gate 1', status: 'completed', statusLabel: LABELS.status.completed },
+      { number: 2, label: 'Gate 2', status: 'attention', statusLabel: LABELS.status.needAttention },
+      { number: 3, label: 'Gate 3', status: 'not-started', statusLabel: LABELS.status.notStarted },
+      { number: 4, label: 'Gate 4', status: 'not-started', statusLabel: LABELS.status.notStarted },
+      { number: 5, label: 'Gate 5', status: 'not-started', statusLabel: LABELS.status.notStarted },
     ],
   },
 
@@ -95,60 +101,64 @@ export const sampleProject = {
     /* ------------------------------- GATE 1 ------------------------------- */
     1: {
       keyMetrics: {
-        title: 'Key Metrics',
+        title: LABELS.sections.keyMetrics,
         metrics: [
-          { id: 'absolute-volume', value: '1000K UC', label: 'Absolute Volume', footnote: 'G1 Baseline', visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Absolute volume position in forecast range', data: [7, 14, 17, 21, 26, 31, 36, 41, 46, 51, 47, 42, 37, 32, 25, 21, 17, 14, 12, 9] } },
-          { id: 'incremental-volume', value: '80K UC', label: 'Incremental Volume', footnote: 'G1 Baseline', visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Incremental volume position in forecast range', data: [6, 12, 16, 20, 25, 30, 35, 40, 45, 50, 48, 43, 38, 33, 27, 22, 18, 14, 11, 8] } },
-          { id: 'gp-margin', value: '36.0%', label: 'GP Margin', trend: { tone: 'positive', label: 'Accretive', delta: '+1 pp', direction: 'up' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: 'Actual', value: '36%', pct: 36, highlight: true }, { id: 'benchmark', label: 'Benchmark', value: '35.0%', pct: 35 }] } },
-          { id: 'capex', value: '$280K', label: 'CAPEX', footnote: 'Under $500K threshold', visual: { kind: 'meter', label: '$280K / $500K', percent: 56, tone: 'positive' } },
+          { id: 'absolute-volume', value: '1000K UC', label: LABELS.metrics.absoluteVolume, footnote: 'G1 Baseline', visual: { kind: 'bars', caption: LABELS.chart.positionInForecastRange, ariaLabel: 'Absolute volume position in forecast range', data: [7, 14, 17, 21, 26, 31, 36, 41, 46, 51, 47, 42, 37, 32, 25, 21, 17, 14, 12, 9] } },
+          { id: 'incremental-volume', value: '80K UC', label: LABELS.metrics.incrementalVolume, footnote: 'G1 Baseline', visual: { kind: 'bars', caption: LABELS.chart.positionInForecastRange, ariaLabel: 'Incremental volume position in forecast range', data: [6, 12, 16, 20, 25, 30, 35, 40, 45, 50, 48, 43, 38, 33, 27, 22, 18, 14, 11, 8] } },
+          { id: 'gp-margin', value: '36.0%', label: LABELS.metrics.gpMargin, trend: { tone: 'positive', label: LABELS.status.accretive, delta: '+1 pp', direction: 'up' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: LABELS.chart.actual, value: '36%', pct: 36, highlight: true }, { id: 'benchmark', label: LABELS.chart.benchmark, value: '35.0%', pct: 35 }] } },
+          { id: 'capex', value: '$280K', label: LABELS.metrics.capex, footnote: 'Under $500K threshold', visual: { kind: 'meter', label: '$280K / $500K', percent: 56, tone: 'positive' } },
         ],
       },
 
       gateDetail: {
         title: 'Gate 1 - Concept approval',
-        target: 'Target Mar 12, 2026',
-        liveStatus: { ariaLabel: 'Live status', selectedKey: 'two-changes', options: [{ id: 'two-changes', label: 'Live Status : 2 Changes' }, { id: 'all-changes', label: 'All changes' }, { id: 'no-changes', label: 'No changes' }] },
-        approval: { tone: 'positive', title: 'Approved Unanimously', detail: 'Closed in 6 days - faster than the 9-day LAOU average · no conditions attached', linkLabel: 'View approval trail', linkHref: '#approval-trail' },
-        stage: { label: 'Stage: Stage 1 -', text: 'Strategy to Idea → Advanced to Stage 2 on approval', tone: 'positive', statusLabel: 'Completed', approvedOn: 'Approved March 12, 2026' },
-        tags: ['OU: Latin America', 'Category: Advanced Hydration', 'Lead: Peter William'],
-        pmoComments: { label: 'PMO Comments', value: '', emptyText: 'Not yet written for this gate' },
+        target: formatLabel(LABELS.templates.target, { date: 'Mar 12, 2026' }),
+        liveStatus: { ariaLabel: 'Live status', selectedKey: 'two-changes', options: [{ id: 'two-changes', label: formatLabel(LABELS.templates.liveStatusChanges, { count: 2 }) }, { id: 'all-changes', label: 'All changes' }, { id: 'no-changes', label: 'No changes' }] },
+        approval: { tone: 'positive', title: 'Approved Unanimously', detail: 'Closed in 6 days - faster than the 9-day LAOU average · no conditions attached', linkLabel: LABELS.actions.viewApprovalTrail, linkHref: '#approval-trail' },
+        stage: { label: formatLabel(LABELS.templates.stage, { name: 'Stage 1' }), text: 'Strategy to Idea → Advanced to Stage 2 on approval', tone: 'positive', statusLabel: LABELS.status.completed, approvedOn: formatLabel(LABELS.templates.approvedOn, { date: 'March 12, 2026' }) },
+        tags: [
+          formatLabel(LABELS.templates.tag, { label: LABELS.tags.ou, value: 'Latin America' }),
+          formatLabel(LABELS.templates.tag, { label: LABELS.tags.category, value: 'Advanced Hydration' }),
+          formatLabel(LABELS.templates.tag, { label: LABELS.tags.lead, value: 'Peter William' }),
+        ],
+        pmoComments: { label: LABELS.fields.pmoComments, value: '', emptyText: LABELS.messages.emptyPmo },
       },
 
       ioFields: {
         title: 'IO Submitted Fields - Business Case',
         workfrontUrl: '#',
-        workfrontLabel: 'Open in Workfront ↗',
+        workfrontLabel: LABELS.actions.openInWorkfront,
         fields: [
-          { id: 'summary', type: 'textarea', label: 'Business Case Summary', value: "Flashlyte Zero platform extension into Mexico. Fills a gap in BODYARMOR's zero-sugar hydration lin…", isReadOnly: true },
-          { id: 'target-consumer', type: 'text', label: 'Target Consumer / Occasion', value: 'Active, health-conscious 18-34, post-workout hydration', isReadOnly: true },
-          { id: 'innovation-driver', type: 'text', label: 'Innovation Driver / Typology', value: 'Line extension - flavor/format variant', isReadOnly: true },
+          { id: 'summary', type: 'textarea', label: LABELS.fields.businessCaseSummary, value: "Flashlyte Zero platform extension into Mexico. Fills a gap in BODYARMOR's zero-sugar hydration lin…", isReadOnly: true },
+          { id: 'target-consumer', type: 'text', label: LABELS.fields.targetConsumer, value: 'Active, health-conscious 18-34, post-workout hydration', isReadOnly: true },
+          { id: 'innovation-driver', type: 'text', label: LABELS.fields.innovationDriver, value: 'Line extension - flavor/format variant', isReadOnly: true },
         ],
         locked: true,
-        lockedTitle: 'Locked',
-        lockedMessage: 'Gate 1 approved. Values are read-only; edit in Workfront if a correction is needed.',
+        lockedTitle: LABELS.messages.lockedTitle,
+        lockedMessage: LABELS.messages.lockedGate1,
       },
 
       approval: {
-        title: 'Approval Trail',
-        summary: '5 of 5 Approved',
-        status: { tone: 'positive', label: 'Approved' },
+        title: LABELS.sections.approvalTrail,
+        summary: formatLabel(LABELS.templates.countApproved, { completed: 5, total: 5 }),
+        status: { tone: 'positive', label: LABELS.status.approved },
         columns: [
-          { id: 'name', label: 'Name', isRowHeader: true },
-          { id: 'department', label: 'Department' },
-          { id: 'date', label: 'Date' },
-          { id: 'status', label: 'Status' },
+          { id: 'name', label: LABELS.columns.name, isRowHeader: true },
+          { id: 'department', label: LABELS.columns.department },
+          { id: 'date', label: LABELS.columns.date },
+          { id: 'status', label: LABELS.columns.status },
         ],
         approvers: [
-          { id: 'eva', name: 'Eva', department: 'MKT', date: 'Apr 13th', status: { tone: 'positive', label: 'Approved' } },
-          { id: 'steven', name: 'Steven', department: 'Tech', date: 'Apr 13th', status: { tone: 'positive', label: 'Approved' } },
-          { id: 'michael', name: 'Michael', department: 'FIN', date: 'Apr 13th', status: { tone: 'positive', label: 'Approved' } },
-          { id: 'sara', name: 'Sara', department: 'PMO', date: 'Apr 13th', status: { tone: 'positive', label: 'Approved' } },
-          { id: 'karina', name: 'Karina', department: 'Regulatory', date: 'Apr 13th', status: { tone: 'positive', label: 'Approved' } },
+          { id: 'eva', name: 'Eva', department: 'MKT', date: 'Apr 13th', status: { tone: 'positive', label: LABELS.status.approved } },
+          { id: 'steven', name: 'Steven', department: 'Tech', date: 'Apr 13th', status: { tone: 'positive', label: LABELS.status.approved } },
+          { id: 'michael', name: 'Michael', department: 'FIN', date: 'Apr 13th', status: { tone: 'positive', label: LABELS.status.approved } },
+          { id: 'sara', name: 'Sara', department: 'PMO', date: 'Apr 13th', status: { tone: 'positive', label: LABELS.status.approved } },
+          { id: 'karina', name: 'Karina', department: 'Regulatory', date: 'Apr 13th', status: { tone: 'positive', label: LABELS.status.approved } },
         ],
       },
 
       gateReadiness: {
-        title: 'Gate Readiness',
+        title: LABELS.sections.gateReadiness,
         completed: 6,
         total: 6,
         items: [
@@ -165,42 +175,46 @@ export const sampleProject = {
     /* ------------------------------- GATE 2 ------------------------------- */
     2: {
       keyMetrics: {
-        title: 'Key Metrics',
+        title: LABELS.sections.keyMetrics,
         metrics: [
-          { id: 'absolute-volume', value: '920K UC', label: 'Absolute Volume', badge: { tone: 'negative', label: '-8% ▼ vs G1' }, visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Absolute volume position in forecast range', data: [8, 13, 18, 22, 27, 32, 37, 42, 47, 51, 46, 41, 36, 31, 26, 21, 16, 13, 10, 7] } },
-          { id: 'incremental-volume', value: '72K UC', label: 'Incremental Volume', badge: { tone: 'negative', label: '-10% ▼ vs G1' }, visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Incremental volume position in forecast range', data: [6, 11, 16, 21, 26, 31, 37, 42, 47, 51, 47, 42, 37, 31, 26, 20, 16, 12, 9, 6] } },
-          { id: 'gp-margin', value: '33%', label: 'GP Margin', trend: { tone: 'negative', label: 'Dilutive', delta: '-3 pp', direction: 'down' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: 'Actual', value: '33%', pct: 33, highlight: true }, { id: 'benchmark', label: 'Benchmark', value: '35.0%', pct: 35 }] } },
-          { id: 'capex', value: '$380K', label: 'CAPEX', footnote: 'Under $500K threshold', visual: { kind: 'meter', label: '$320K / $500K', percent: 76, tone: 'positive' } },
+          { id: 'absolute-volume', value: '920K UC', label: LABELS.metrics.absoluteVolume, badge: { tone: 'negative', label: '-8% ▼ vs G1' }, visual: { kind: 'bars', caption: LABELS.chart.positionInForecastRange, ariaLabel: 'Absolute volume position in forecast range', data: [8, 13, 18, 22, 27, 32, 37, 42, 47, 51, 46, 41, 36, 31, 26, 21, 16, 13, 10, 7] } },
+          { id: 'incremental-volume', value: '72K UC', label: LABELS.metrics.incrementalVolume, badge: { tone: 'negative', label: '-10% ▼ vs G1' }, visual: { kind: 'bars', caption: LABELS.chart.positionInForecastRange, ariaLabel: 'Incremental volume position in forecast range', data: [6, 11, 16, 21, 26, 31, 37, 42, 47, 51, 47, 42, 37, 31, 26, 20, 16, 12, 9, 6] } },
+          { id: 'gp-margin', value: '33%', label: LABELS.metrics.gpMargin, trend: { tone: 'negative', label: LABELS.status.dilutive, delta: '-3 pp', direction: 'down' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: LABELS.chart.actual, value: '33%', pct: 33, highlight: true }, { id: 'benchmark', label: LABELS.chart.benchmark, value: '35.0%', pct: 35 }] } },
+          { id: 'capex', value: '$380K', label: LABELS.metrics.capex, footnote: 'Under $500K threshold', visual: { kind: 'meter', label: '$320K / $500K', percent: 76, tone: 'positive' } },
         ],
       },
 
       gateDetail: {
         title: 'Gate 2 - Decision to develop',
-        target: 'Target Dec 1, 2026',
-        liveStatus: { ariaLabel: 'Live status', selectedKey: 'two-changes', options: [{ id: 'two-changes', label: 'Live Status : 2 Changes' }, { id: 'all-changes', label: 'All changes' }, { id: 'no-changes', label: 'No changes' }] },
-        stage: { label: 'Stage: Stage 1 -', text: 'Strategy to Idea → Will advance to Stage 2 on approval · Review was June 20' },
-        tags: ['OU: Latin America', 'Category: Sparkling Flavors', 'Lead: Peter William'],
-        pmoComments: { label: 'PMO Comments', value: 'Launch via Flashlyte Zero chassis. No CAPEX required. Conditional on margin analysis - Sara Estrada Olvera to confirm GP margin vs benchmark within 5 business days of gate.' },
+        target: formatLabel(LABELS.templates.target, { date: 'Dec 1, 2026' }),
+        liveStatus: { ariaLabel: 'Live status', selectedKey: 'two-changes', options: [{ id: 'two-changes', label: formatLabel(LABELS.templates.liveStatusChanges, { count: 2 }) }, { id: 'all-changes', label: 'All changes' }, { id: 'no-changes', label: 'No changes' }] },
+        stage: { label: formatLabel(LABELS.templates.stage, { name: 'Stage 1' }), text: 'Strategy to Idea → Will advance to Stage 2 on approval · Review was June 20' },
+        tags: [
+          formatLabel(LABELS.templates.tag, { label: LABELS.tags.ou, value: 'Latin America' }),
+          formatLabel(LABELS.templates.tag, { label: LABELS.tags.category, value: 'Sparkling Flavors' }),
+          formatLabel(LABELS.templates.tag, { label: LABELS.tags.lead, value: 'Peter William' }),
+        ],
+        pmoComments: { label: LABELS.fields.pmoComments, value: 'Launch via Flashlyte Zero chassis. No CAPEX required. Conditional on margin analysis - Sara Estrada Olvera to confirm GP margin vs benchmark within 5 business days of gate.' },
       },
 
       aiRecommendation: {
-        title: 'AI Recommendation',
-        askLabel: 'Ask AI Recommendation',
+        title: LABELS.sections.aiRecommendation,
+        askLabel: LABELS.actions.askAiRecommendation,
         alert: { tone: 'negative', title: 'Hold Recommended', detail: '2 items must be resolved before Gate 2 can move forward. Margin analysis is overdue and TECH has not signed off - a conditional GO at this stage carries meaningful financial risk.' },
         factors: [
           { id: 'cogs', tone: 'negative', icon: 'close', label: 'COGS missing - FIN sign-off blocked' },
           { id: 'tech', tone: 'notice', icon: 'preview', label: 'TECH feasibility in review - sign-off pending' },
           { id: 'dvf', tone: 'positive', icon: 'checkmark', label: 'DVF 7.2 is above LAOU Gate 2 average (6.9)' },
         ],
-        freshness: { text: 'Updated before the last deliverable change', linkLabel: 'Get a fresh look', linkHref: '#' },
+        freshness: { text: 'Updated before the last deliverable change', linkLabel: LABELS.actions.getFreshLook, linkHref: '#' },
         actions: [
-          { id: 'draft-hold', label: 'Draft hold rationale', variant: 'primary', fillStyle: 'fill' },
-          { id: 'log-go', label: 'Log conditional GO', variant: 'secondary', fillStyle: 'outline' },
+          { id: 'draft-hold', label: LABELS.actions.draftHoldRationale, variant: 'primary', fillStyle: 'fill' },
+          { id: 'log-go', label: LABELS.actions.logConditionalGo, variant: 'secondary', fillStyle: 'outline' },
         ],
       },
 
       beyondSummary: {
-        title: 'Beyond the Summary',
+        title: LABELS.sections.beyondSummary,
         description: 'Traces each AI recommendation down to the specific number behind it - Recommendation → Reason → Impact → Gate decision — instead of showing unrelated context.',
         selectedTab: 'commercial',
         tabs: [
@@ -226,7 +240,7 @@ export const sampleProject = {
       ioFields: {
         title: 'IO Required Fields - Margin Guidance & Desired Claims',
         workfrontUrl: '#',
-        workfrontLabel: 'Open in Workfront ↗',
+        workfrontLabel: LABELS.actions.openInWorkfront,
         fields: [
           { id: 'margin-guidance', type: 'textarea', label: 'Margin guidance', required: true, placeholder: 'Enter GP margin guidance, e.g. estimated margin range vs benchmark and key cost drivers…' },
           { id: 'desired-claims', type: 'textarea', label: 'Desired Claims', required: true, placeholder: 'eg. Zero sugar, functional hydration, electrolyte-enhanced…' },
@@ -237,36 +251,36 @@ export const sampleProject = {
       },
 
       keyKpis: {
-        title: 'Key KPIs',
+        title: LABELS.sections.keyKpis,
         subtitle: 'Latin America Sparkling Flavors E · Coca-Cola Zero Sugar Cherry',
         items: [
-          { id: 'trial-rate', name: 'Trial rate (first 90 days)', detail: '15% target → actual not yet reported', status: { tone: 'notice', label: 'Pending' } },
-          { id: 'distribution', name: 'Distribution points', detail: '12,000 stores target → actual 8,400 stores', status: { tone: 'positive', label: 'Tracking' } },
-          { id: 'awareness', name: 'Unaided brand awareness lift', detail: '+4 pts target → actual not yet reported', status: { tone: 'notice', label: 'Pending' } },
+          { id: 'trial-rate', name: 'Trial rate (first 90 days)', detail: '15% target → actual not yet reported', status: { tone: 'notice', label: LABELS.status.pending } },
+          { id: 'distribution', name: 'Distribution points', detail: '12,000 stores target → actual 8,400 stores', status: { tone: 'positive', label: LABELS.status.tracking } },
+          { id: 'awareness', name: 'Unaided brand awareness lift', detail: '+4 pts target → actual not yet reported', status: { tone: 'notice', label: LABELS.status.pending } },
         ],
         footnote: "KPIs are defined in Workfront Planning, not authored in this app - this list updates automatically as fields are added or connected. 'Tracking' only means an actual value has been reported, not whether it's favorable; target-direction (higher-is/lower-is-better) isn't part of the data model, so this view doesn't auto-judge performance. The same target/actual structure carries into post-launch tracking once a project passes Gate 5.",
       },
 
       approval: {
-        title: 'Approval',
-        summary: '5 of 5 Approved',
-        headerAction: { id: 'configure-approvers', label: 'Configure Approvers', icon: 'settings', variant: 'primary', fillStyle: 'fill' },
+        title: LABELS.sections.approval,
+        summary: formatLabel(LABELS.templates.countApproved, { completed: 5, total: 5 }),
+        headerAction: { id: 'configure-approvers', label: LABELS.actions.configureApprovers, icon: 'settings', variant: 'primary', fillStyle: 'fill' },
         columns: [
-          { id: 'name', label: 'Name', isRowHeader: true },
-          { id: 'department', label: 'Department' },
-          { id: 'status', label: 'Status' },
+          { id: 'name', label: LABELS.columns.name, isRowHeader: true },
+          { id: 'department', label: LABELS.columns.department },
+          { id: 'status', label: LABELS.columns.status },
         ],
         approvers: [
-          { id: 'elena', name: 'Elena Vasquez', department: 'MKT', statuses: [{ tone: 'positive', label: 'Approved' }, { tone: 'neutral', label: 'Re-Open' }] },
-          { id: 'steven', name: 'Steven', department: 'Tech', statuses: [{ tone: 'notice', label: 'Pending' }, { tone: 'positive', label: 'Approved' }, { tone: 'negative', label: 'Needs Work' }] },
-          { id: 'michael', name: 'Michael', department: 'FIN', statuses: [{ tone: 'notice', label: 'Pending' }, { tone: 'positive', label: 'Approved' }, { tone: 'negative', label: 'Needs Work' }] },
-          { id: 'sara', name: 'Sara', department: 'PMO', statuses: [{ tone: 'notice', label: 'Pending' }, { tone: 'positive', label: 'Approved' }, { tone: 'negative', label: 'Needs Work' }] },
-          { id: 'karina', name: 'Karina', department: 'Regulatory', statuses: [{ tone: 'notice', label: 'Pending' }, { tone: 'positive', label: 'Approved' }, { tone: 'negative', label: 'Needs Work' }] },
+          { id: 'elena', name: 'Elena Vasquez', department: 'MKT', statuses: [{ tone: 'positive', label: LABELS.status.approved }, { tone: 'neutral', label: LABELS.status.reOpen }] },
+          { id: 'steven', name: 'Steven', department: 'Tech', statuses: [{ tone: 'notice', label: LABELS.status.pending }, { tone: 'positive', label: LABELS.status.approved }, { tone: 'negative', label: LABELS.status.needsWork }] },
+          { id: 'michael', name: 'Michael', department: 'FIN', statuses: [{ tone: 'notice', label: LABELS.status.pending }, { tone: 'positive', label: LABELS.status.approved }, { tone: 'negative', label: LABELS.status.needsWork }] },
+          { id: 'sara', name: 'Sara', department: 'PMO', statuses: [{ tone: 'notice', label: LABELS.status.pending }, { tone: 'positive', label: LABELS.status.approved }, { tone: 'negative', label: LABELS.status.needsWork }] },
+          { id: 'karina', name: 'Karina', department: 'Regulatory', statuses: [{ tone: 'notice', label: LABELS.status.pending }, { tone: 'positive', label: LABELS.status.approved }, { tone: 'negative', label: LABELS.status.needsWork }] },
         ],
       },
 
       gateReadiness: {
-        title: 'Gate Readiness',
+        title: LABELS.sections.gateReadiness,
         completed: 2,
         total: 7,
         items: [
@@ -279,10 +293,10 @@ export const sampleProject = {
           { id: 'capacity', label: 'Capacity readiness confirmed', tone: 'neutral' },
         ],
         legend: [
-          { id: 'approved', tone: 'positive', label: 'Approved' },
-          { id: 'in-review', tone: 'informative', label: 'In Review' },
-          { id: 'missing', tone: 'notice', label: 'Missing-overdue' },
-          { id: 'not-started', tone: 'neutral', label: 'Not Started' },
+          { id: 'approved', tone: 'positive', label: LABELS.status.approved },
+          { id: 'in-review', tone: 'informative', label: LABELS.status.inReview },
+          { id: 'missing', tone: 'notice', label: LABELS.status.missingOverdue },
+          { id: 'not-started', tone: 'neutral', label: LABELS.status.notStarted },
         ],
       },
     },

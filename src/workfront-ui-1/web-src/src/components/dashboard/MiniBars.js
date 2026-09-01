@@ -3,43 +3,35 @@
  */
 
 /**
- * Tiny bar sparkline rendered as inline SVG from a numeric array.
- * No charting dependency — swap for a real chart lib later if needed.
+ * Tiny bar histogram matching the Figma KPI sparkline: fixed 4px seafoam bars
+ * with 1px gaps, bottom-aligned, plus a vertical "position in forecast range"
+ * marker. No charting dependency — swap for a real chart lib later if needed.
  */
 import { chartCaption } from './styles';
 
-function MiniBars({ data = [], caption, ariaLabel }) {
-  const width = 132;
-  const height = 44;
-  const gap = 2;
+const HEIGHT = 48; // px — histogram area height
+
+function MiniBars({ data = [], caption, ariaLabel, marker = 0.5 }) {
   const max = Math.max(...data, 1);
-  const count = data.length || 1;
-  const barWidth = (width - gap * (count - 1)) / count;
 
   return (
     <div className="es-minibars">
-      <svg
-        className="es-minibars__svg"
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="none"
-        role="img"
-        aria-label={ariaLabel || caption}
-      >
-        {data.map((value, index) => {
-          const barHeight = Math.max((value / max) * height, 1);
-          return (
-            <rect
-              key={index}
-              className="es-minibars__bar"
-              x={index * (barWidth + gap)}
-              y={height - barHeight}
-              width={barWidth}
-              height={barHeight}
-              rx="1"
-            />
-          );
-        })}
-      </svg>
+      <div className="es-minibars__hist" role="img" aria-label={ariaLabel || caption}>
+        {data.map((value, index) => (
+          <span
+            key={index}
+            className="es-minibars__bar"
+            style={{ height: `${Math.max((value / max) * HEIGHT, 2)}px` }}
+          />
+        ))}
+        {typeof marker === 'number' && (
+          <span
+            className="es-minibars__marker"
+            style={{ left: `${Math.min(Math.max(marker, 0), 1) * 100}%` }}
+            aria-hidden="true"
+          />
+        )}
+      </div>
       {caption && <span className={`es-minibars__caption ${chartCaption}`}>{caption}</span>}
     </div>
   );

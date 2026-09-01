@@ -4,14 +4,21 @@
 
 import { StatusLight, Badge } from '@react-spectrum/s2';
 import MiniBars from './MiniBars';
-import { metricSurface, metricValue, labelText, detailText, chartValue, chartCaption } from './styles';
+import { metricSurface, metricValue, labelText, detailText, chartValue, chartCaption, deltaText } from './styles';
 
 /** Renders the right-hand visual of a metric card based on `visual.kind`. */
 function MetricVisual({ visual }) {
   if (!visual) return null;
 
   if (visual.kind === 'bars') {
-    return <MiniBars data={visual.data} caption={visual.caption} ariaLabel={visual.ariaLabel} />;
+    return (
+      <MiniBars
+        data={visual.data}
+        caption={visual.caption}
+        ariaLabel={visual.ariaLabel}
+        marker={visual.marker}
+      />
+    );
   }
 
   if (visual.kind === 'meter') {
@@ -31,6 +38,13 @@ function MetricVisual({ visual }) {
   }
 
   if (visual.kind === 'comparison') {
+    // Figma "zooms" the bars: both fill most of the chart height so the small
+    // gap between the values stays readable (tallest ≈ full, shortest ≈ 90%).
+    const pcts = visual.bars.map((bar) => bar.pct);
+    const maxPct = Math.max(...pcts);
+    const minPct = Math.min(...pcts);
+    const span = maxPct - minPct;
+    const barHeight = (pct) => (span === 0 ? 100 : 90 + ((pct - minPct) / span) * 10);
     return (
       <div className="es-compare">
         {visual.bars.map((bar) => (
@@ -39,7 +53,7 @@ function MetricVisual({ visual }) {
             <div className="es-compare__track">
               <div
                 className={bar.highlight ? 'es-compare__bar es-compare__bar--hl' : 'es-compare__bar'}
-                style={{ height: `${bar.pct}%` }}
+                style={{ height: `${barHeight(bar.pct)}%` }}
               />
             </div>
             <span className={`es-compare__label ${chartCaption}`}>{bar.label}</span>
@@ -61,7 +75,22 @@ function MetricCard({ metric }) {
         <div className={`es-metric__label ${labelText}`}>{metric.label}</div>
         <div className="es-metric__delta">
           {metric.trend && (
-            <StatusLight variant={metric.trend.tone || 'positive'}>{metric.trend.text}</StatusLight>
+            <span className="es-trend">
+              <StatusLight variant={metric.trend.tone || 'positive'}>
+                {metric.trend.label || metric.trend.text}
+              </StatusLight>
+              {metric.trend.delta && (
+                <span className={`es-trend__delta ${deltaText}`}>
+                  <span
+                    className={`es-trend__arrow es-trend__arrow--${metric.trend.tone || 'positive'}`}
+                    aria-hidden="true"
+                  >
+                    {metric.trend.direction === 'down' ? '▼' : '▲'}
+                  </span>
+                  {metric.trend.delta}
+                </span>
+              )}
+            </span>
           )}
           {metric.badge && <Badge variant={metric.badge.tone || 'neutral'}>{metric.badge.label}</Badge>}
           {metric.footnote && (

@@ -15,10 +15,14 @@ import {
 
 const MARKER_TOKENS = {
   completed: markerCompleted,
+  approved: markerCompleted, // an approved gate renders green, same as completed
   current: markerCurrent,
   attention: markerAttention,
   'not-started': markerNotStarted,
 };
+
+// Statuses that mean the gate has passed approval → green marker + checkmark.
+const APPROVED_STATES = new Set(['completed', 'approved']);
 
 /**
  * Vertical gate stepper matching the design (circular markers + connector
@@ -43,9 +47,11 @@ function GatePipeline({ data, selectedKey, onGateSelect }) {
           const id = String(gate.number);
           const disabled = gate.status === 'not-started';
           const isSelected = id === String(selectedKey);
-          const markerState =
-            gate.status !== 'completed' && isSelected ? 'current' : gate.status;
-          const stepClass = `es-step es-step--${gate.status}${isSelected ? ' es-step--selected' : ''}`;
+          const isApproved = APPROVED_STATES.has(gate.status);
+          // Approved gates are always green; a selected, not-yet-approved gate
+          // shows the dark "current" marker.
+          const markerState = !isApproved && isSelected ? 'current' : gate.status;
+          const stepClass = `es-step es-step--${gate.status}${isApproved ? ' es-step--approved' : ''}${isSelected ? ' es-step--selected' : ''}`;
           return (
             <li key={gate.number} className={stepClass}>
               <button
@@ -56,7 +62,7 @@ function GatePipeline({ data, selectedKey, onGateSelect }) {
                 onClick={() => onGateSelect && onGateSelect(id)}
               >
                 <span className={`es-step__marker ${markerGlyph} ${MARKER_TOKENS[markerState]}`} aria-hidden="true">
-                  {gate.status === 'completed' ? '✓' : gate.number}
+                  {isApproved ? '✓' : gate.number}
                 </span>
                 <span className="es-step__text">
                   <span className={`es-step__label ${stepLabel}`}>{gate.label}</span>

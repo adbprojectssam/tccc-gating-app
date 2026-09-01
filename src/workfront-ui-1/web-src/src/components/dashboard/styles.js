@@ -51,6 +51,7 @@ export const stepLabel = style({ fontSize: 'ui', fontWeight: 'medium' }); // 14p
 export const stepStatus = style({ fontSize: 'ui-sm', color: 'neutral-subdued' }); // 12px
 export const chartCaption = style({ fontSize: 'ui-xs', color: 'neutral-subdued' }); // 11px
 export const chartValue = style({ fontSize: 'ui-xs', fontWeight: 'bold' }); // 11px bold
+export const deltaText = style({ fontSize: 'ui-sm', color: 'neutral' }); // KPI trend delta "+1 pp" 12px #292929
 export const markerGlyph = style({ fontSize: 'ui-sm', fontWeight: 'bold' }); // gate marker digit/check
 
 /* ---------------- Card surface (color + spacing tokens) ---------------- */

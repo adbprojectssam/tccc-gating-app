@@ -97,9 +97,9 @@ export const sampleProject = {
       keyMetrics: {
         title: 'Key Metrics',
         metrics: [
-          { id: 'absolute-volume', value: '1000K UC', label: 'Absolute Volume', footnote: 'G1 Baseline', visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Absolute volume position in forecast range', data: [3, 5, 7, 9, 12, 15, 18, 20, 18, 15, 12, 9, 7, 5, 3] } },
-          { id: 'incremental-volume', value: '80K UC', label: 'Incremental Volume', footnote: 'G1 Baseline', visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Incremental volume position in forecast range', data: [2, 4, 6, 9, 13, 16, 19, 20, 19, 16, 13, 9, 6, 4, 2] } },
-          { id: 'gp-margin', value: '36.0%', label: 'GP Margin', trend: { tone: 'positive', text: 'Accretive ▲ +1 pp' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: 'Actual', value: '36%', pct: 36, highlight: true }, { id: 'benchmark', label: 'Benchmark', value: '35.0%', pct: 35 }] } },
+          { id: 'absolute-volume', value: '1000K UC', label: 'Absolute Volume', footnote: 'G1 Baseline', visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Absolute volume position in forecast range', data: [7, 14, 17, 21, 26, 31, 36, 41, 46, 51, 47, 42, 37, 32, 25, 21, 17, 14, 12, 9] } },
+          { id: 'incremental-volume', value: '80K UC', label: 'Incremental Volume', footnote: 'G1 Baseline', visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Incremental volume position in forecast range', data: [6, 12, 16, 20, 25, 30, 35, 40, 45, 50, 48, 43, 38, 33, 27, 22, 18, 14, 11, 8] } },
+          { id: 'gp-margin', value: '36.0%', label: 'GP Margin', trend: { tone: 'positive', label: 'Accretive', delta: '+1 pp', direction: 'up' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: 'Actual', value: '36%', pct: 36, highlight: true }, { id: 'benchmark', label: 'Benchmark', value: '35.0%', pct: 35 }] } },
           { id: 'capex', value: '$280K', label: 'CAPEX', footnote: 'Under $500K threshold', visual: { kind: 'meter', label: '$280K / $500K', percent: 56, tone: 'positive' } },
         ],
       },
@@ -167,9 +167,9 @@ export const sampleProject = {
       keyMetrics: {
         title: 'Key Metrics',
         metrics: [
-          { id: 'absolute-volume', value: '920K UC', label: 'Absolute Volume', badge: { tone: 'negative', label: '-8% ▼ vs G1' }, visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Absolute volume position in forecast range', data: [4, 6, 8, 11, 14, 17, 19, 20, 18, 15, 12, 9, 7, 5, 3] } },
-          { id: 'incremental-volume', value: '72K UC', label: 'Incremental Volume', badge: { tone: 'negative', label: '-10% ▼ vs G1' }, visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Incremental volume position in forecast range', data: [3, 5, 7, 10, 14, 17, 19, 20, 18, 15, 12, 9, 6, 4, 2] } },
-          { id: 'gp-margin', value: '33%', label: 'GP Margin', trend: { tone: 'negative', text: 'Dilutive ▼ -3 pp' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: 'Actual', value: '33%', pct: 33, highlight: true }, { id: 'benchmark', label: 'Benchmark', value: '35.0%', pct: 35 }] } },
+          { id: 'absolute-volume', value: '920K UC', label: 'Absolute Volume', badge: { tone: 'negative', label: '-8% ▼ vs G1' }, visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Absolute volume position in forecast range', data: [8, 13, 18, 22, 27, 32, 37, 42, 47, 51, 46, 41, 36, 31, 26, 21, 16, 13, 10, 7] } },
+          { id: 'incremental-volume', value: '72K UC', label: 'Incremental Volume', badge: { tone: 'negative', label: '-10% ▼ vs G1' }, visual: { kind: 'bars', caption: 'Position in forecast range', ariaLabel: 'Incremental volume position in forecast range', data: [6, 11, 16, 21, 26, 31, 37, 42, 47, 51, 47, 42, 37, 31, 26, 20, 16, 12, 9, 6] } },
+          { id: 'gp-margin', value: '33%', label: 'GP Margin', trend: { tone: 'negative', label: 'Dilutive', delta: '-3 pp', direction: 'down' }, visual: { kind: 'comparison', bars: [{ id: 'actual', label: 'Actual', value: '33%', pct: 33, highlight: true }, { id: 'benchmark', label: 'Benchmark', value: '35.0%', pct: 35 }] } },
           { id: 'capex', value: '$380K', label: 'CAPEX', footnote: 'Under $500K threshold', visual: { kind: 'meter', label: '$320K / $500K', percent: 76, tone: 'positive' } },
         ],
       },

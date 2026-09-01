@@ -194,6 +194,33 @@
   margin-top: 4px;
 }
 
+/* KPI trend: StatusLight (green/red dot + word) + small tone-colored arrow +
+   dark delta value — matches Figma (only dot & arrow are colored). */
+.es-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.es-trend__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.es-trend__arrow {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.es-trend__arrow--positive {
+  color: var(--es-positive);
+}
+
+.es-trend__arrow--negative {
+  color: var(--es-negative);
+}
+
 .es-metric__visual {
   flex: 1 1 0;
   min-width: 0;
@@ -244,28 +271,50 @@
   border-radius: 2px;
 }
 
-/* Mini bar sparkline (chart marks — no Spectrum token) */
+/* Mini bar sparkline / histogram (Figma: 4px seafoam bars, 1px gaps, centered,
+   with a vertical position marker). No Spectrum token — pure chart marks. */
 .es-minibars {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  /* width: 100%; */
 }
 
-.es-minibars__svg {
-  width: 92px;
-  height: 38px;
+.es-minibars__hist {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1px;
+  height: 48px;
+  width: 100%;
+  margin-inline: 8px;
 }
 
 .es-minibars__bar {
-  fill: var(--es-seafoam);
+  width: 4px;
+  flex-shrink: 0;
+  background: var(--es-seafoam);
+  border-radius: 1px;
+}
+
+/* "Position in forecast range" marker — thin dark line taller than the bars. */
+.es-minibars__marker {
+  position: absolute;
+  bottom: 0;
+  width: 1.5px;
+  height: 118%;
+  background: var(--es-text-body);
+  opacity: 0.8;
+  transform: translateX(-50%);
 }
 
 .es-minibars__caption {
-  text-align: right;
+  text-align: center;
 }
 
-/* Actual vs benchmark comparison (chart marks) */
+/* Actual vs benchmark comparison (Figma: 24px bars, 12px gap; benchmark #e1e1e1) */
 .es-compare {
   display: flex;
   gap: 12px;
@@ -280,15 +329,15 @@
 }
 
 .es-compare__track {
-  width: 26px;
-  height: 44px;
+  width: 24px;
+  height: 48px;
   display: flex;
   align-items: flex-end;
 }
 
 .es-compare__bar {
   width: 100%;
-  background: var(--es-track);
+  background: var(--es-border);
   border-radius: 3px;
 }
 
@@ -382,7 +431,9 @@
   line-height: 1.2;
 }
 
-.es-step--completed .es-step__label {
+.es-step--completed .es-step__label,
+.es-step--completed .es-step__status,
+.es-step--approved .es-step__label {
   color: var(--es-green);
 }
 

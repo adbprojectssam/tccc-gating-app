@@ -1,0 +1,141 @@
+/*
+ * <license header>
+ *
+ * Chat widget — layout + bubbles only. Controls (TextField, ActionButton,
+ * CloseButton, ProgressCircle) are Spectrum 2. The widget renders outside
+ * .es-dashboard, so the Adobe Clean font is re-applied here.
+ */
+.es-chat {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000;
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+  color: #131313;
+}
+
+.es-chat *,
+.es-chat *::before,
+.es-chat *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Launcher (round FAB) ---------- */
+.es-chat__launcher {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  /* Figma GenAI gradient (Button M, Primary GenAI Gradient). */
+  background-image: linear-gradient(
+    122.88deg,
+    #d73220 0%,
+    #d92361 33%,
+    #7155fa 100%
+  );
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.es-chat__launcher:hover {
+  filter: brightness(1.07);
+}
+.es-chat__launcher:focus-visible {
+  outline: 2px solid #7155fa;
+  outline-offset: 2px;
+}
+.es-chat__launcher svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ---------- Panel ---------- */
+.es-chat__panel {
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  height: 600px;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e1e1e1;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.es-chat__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid #e1e1e1;
+}
+.es-chat__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ---------- Messages ---------- */
+.es-chat__messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.es-chat__empty {
+  margin: auto;
+  color: #717171;
+  font-size: 14px;
+}
+
+.es-chat__row {
+  display: flex;
+}
+/* user → left, assistant/response → right */
+.es-chat__row--user {
+  justify-content: flex-start;
+}
+.es-chat__row--assistant {
+  justify-content: flex-end;
+}
+
+.es-chat__bubble {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.es-chat__bubble--user {
+  background: #f0f0f0;
+  color: #131313;
+  border-bottom-left-radius: 4px;
+}
+.es-chat__bubble--assistant {
+  background: #e5f0fe;
+  color: #131313;
+  border-bottom-right-radius: 4px;
+}
+.es-chat__bubble--error {
+  background: #ffeceb;
+  color: #b21f0f;
+}
+
+/* ---------- Input ---------- */
+.es-chat__input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #e1e1e1;
+}

@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { ProgressCircle } from "@react-spectrum/s2";
 import GatingDashboard from "./dashboard/GatingDashboard";
+import ChatWidget from "./chat/ChatWidget";
 import { loadProject } from "../data/loadProject";
 // import { register } from "@adobe/uix-guest";
 // import { extensionId } from "./Constants";
@@ -41,15 +42,18 @@ const ProjectstatusMainMenuItem = () => {
   //   setProjectId(context?.get("objID"));
   // }, []);
 
-  if (!project) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-        <ProgressCircle aria-label="Loading project…" isIndeterminate />
-      </div>
-    );
-  }
-
-  return <GatingDashboard project={project} />;
+  return (
+    <>
+      {project ? (
+        <GatingDashboard project={project} />
+      ) : (
+        <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+          <ProgressCircle aria-label="Loading project…" isIndeterminate />
+        </div>
+      )}
+      <ChatWidget />
+    </>
+  );
 };
 
 export default ProjectstatusMainMenuItem;

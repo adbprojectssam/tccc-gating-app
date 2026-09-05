@@ -7,7 +7,9 @@ import {
   Picker,
   PickerItem,
   TextArea,
+  Text,
 } from '@react-spectrum/s2';
+import MovieCamera from '@react-spectrum/s2/icons/MovieCamera';
 import SectionCard from './SectionCard';
 import { getIcon } from './iconRegistry';
 import { fullWidth, stageText, detailText, bannerTitle, bannerBody, linkText } from './styles';
@@ -19,18 +21,25 @@ function GateDetailCard({ gate, onLiveStatusChange }) {
   if (!gate) return null;
 
   const liveStatus = gate.liveStatus;
+  // Figma "Picker (S)" with an orange movie-camera leading icon. S2 re-renders
+  // the value-slot icon with its own classes, so the orange fill is applied via
+  // the .es-live-status wrapper in CSS (targets the value icon, not the chevron).
   const action = liveStatus ? (
-    <Picker
-      aria-label={liveStatus.ariaLabel}
-      defaultSelectedKey={liveStatus.selectedKey}
-      onSelectionChange={(key) => onLiveStatusChange && onLiveStatusChange(key)}
-    >
-      {liveStatus.options.map((option) => (
-        <PickerItem key={option.id} id={option.id}>
-          {option.label}
-        </PickerItem>
-      ))}
-    </Picker>
+    <span className="es-live-status">
+      <Picker
+        size="S"
+        aria-label={liveStatus.ariaLabel}
+        defaultSelectedKey={liveStatus.selectedKey}
+        onSelectionChange={(key) => onLiveStatusChange && onLiveStatusChange(key)}
+      >
+        {liveStatus.options.map((option) => (
+          <PickerItem key={option.id} id={option.id} textValue={option.label}>
+            <MovieCamera />
+            <Text>{option.label}</Text>
+          </PickerItem>
+        ))}
+      </Picker>
+    </span>
   ) : null;
 
   return (
@@ -69,15 +78,16 @@ function GateDetailCard({ gate, onLiveStatusChange }) {
               )}
             </div>
           )}
-          {gate.tags && gate.tags.length > 0 && (
-            <div className="es-tag-row">
-              {gate.tags.map((tag) => (
-                <Badge key={tag} variant="neutral" fillStyle="subtle" size="S">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
+        </div>
+      )}
+
+      {gate.tags && gate.tags.length > 0 && (
+        <div className="es-tag-row">
+          {gate.tags.map((tag) => (
+            <Badge key={tag} variant="neutral" fillStyle="subtle" size="S">
+              {tag}
+            </Badge>
+          ))}
         </div>
       )}
 
@@ -88,7 +98,7 @@ function GateDetailCard({ gate, onLiveStatusChange }) {
             label={gate.pmoComments.label}
             value={gate.pmoComments.value || ''}
             isReadOnly
-            description={!gate.pmoComments.value ? gate.pmoComments.emptyText : undefined}
+            placeholder={!gate.pmoComments.value ? gate.pmoComments.emptyText : undefined}
           />
         </div>
       )}

@@ -57,6 +57,12 @@ export const LABELS = {
     capex: 'CAPEX',
   },
 
+  // KPI card footnotes (secondary labels under the metric).
+  footnotes: {
+    g1Baseline: 'G1 Baseline',
+    capexThreshold: 'Under $500K threshold',
+  },
+
   // Chart labels & captions.
   chart: {
     positionInForecastRange: 'Position in forecast range',
@@ -84,6 +90,7 @@ export const LABELS = {
   // possible words is static.
   status: {
     completed: 'Completed',
+    inProgress: 'In Progress',
     needAttention: 'Need Attention',
     notStarted: 'Not Started',
     approved: 'Approved',

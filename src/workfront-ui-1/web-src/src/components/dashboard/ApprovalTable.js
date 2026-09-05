@@ -12,9 +12,10 @@ import {
   Badge,
   StatusLight,
   Button,
+  Text,
 } from '@react-spectrum/s2';
 import SectionCard from './SectionCard';
-import { fullWidth, dateCellText } from './styles';
+import { fullWidth, dateCellText, detailText } from './styles';
 import { getIcon } from './iconRegistry';
 
 const Calendar = getIcon('calendar');
@@ -92,12 +93,23 @@ function ApprovalTable({ data, onHeaderAction }) {
       </Button>
     );
   } else if (data.status) {
-    action = <Badge variant={data.status.tone} fillStyle="subtle">{data.status.label}</Badge>;
+    // Figma shows the summary "Approved" badge with a leading checkmark-circle.
+    const StatusIcon = data.status.tone === 'positive' ? getIcon('checkmarkCircle') : null;
+    action = (
+      <Badge variant={data.status.tone} fillStyle="subtle">
+        {StatusIcon && <StatusIcon />}
+        <Text>{data.status.label}</Text>
+      </Badge>
+    );
   }
 
   return (
     <SectionCard title={data.title} subtitle={data.summary} action={action}>
-      <TableView aria-label={data.title} styles={fullWidth}>
+      <TableView
+        aria-label={data.title}
+        styles={fullWidth}
+        renderEmptyState={() => <span className={detailText}>No approvers yet</span>}
+      >
         <TableHeader columns={columns}>
           {(column) => (
             <Column id={column.id} isRowHeader={column.isRowHeader}>

@@ -43,8 +43,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 1220px;
-  margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
 }
@@ -167,9 +165,10 @@
 }
 
 .es-metric {
+  gap: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
 }
 
 .es-metric__left {
@@ -222,7 +221,7 @@
 }
 
 .es-metric__visual {
-  flex: 1 1 0;
+  /* flex: 1 1 0; */
   min-width: 0;
   display: flex;
   align-items: center;
@@ -362,7 +361,7 @@
 
 /* ---------- Gate pipeline stepper (marker colors tokenized) ---------- */
 .es-pipeline {
-  padding-top: 4px;
+  padding-top: 20px;
 }
 
 .es-pipeline__list {
@@ -467,6 +466,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin: 16px 0;
 }
 
 .es-pmo {
@@ -540,6 +540,14 @@
   display: inline-flex;
   flex-shrink: 0;
   --iconPrimary: var(--es-text-subdued);
+}
+
+/* Orange leading icon in the "Live Status" Picker (Figma non-semantic orange).
+   S2 re-renders the value-slot icon with its own classes, so color it by
+   targeting the icon SVG inside the picker value span (the chevron sits AFTER
+   that span, so it stays neutral). */
+.es-live-status button > span svg path {
+  fill: #e86a00 !important;
 }
 
 /* ---------- IO fields ---------- */
@@ -678,12 +686,14 @@
 }
 
 .es-readiness__list {
+  /* Figma: flex-wrap, 16px gap — items size to content and flow as many per
+     row as fit (5 at full width), not a fixed column count. */
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: 10px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
 }
 
 .es-readiness__legend {
@@ -743,7 +753,7 @@
 .es-exec {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 30px;
   padding-top: 16px;
 }
 
@@ -809,9 +819,6 @@
   }
   .es-body {
     grid-template-columns: 1fr;
-  }
-  .es-readiness__list {
-    grid-template-columns: repeat(2, auto);
   }
   .es-beyond__grid {
     grid-template-columns: 1fr;

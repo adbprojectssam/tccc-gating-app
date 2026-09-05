@@ -5,8 +5,8 @@
 import { Text } from "@react-spectrum/s2";
 import { register } from "@adobe/uix-guest";
 import { extensionId } from "./Constants";
-import metadata from '../../../../app-metadata.json';
-import { icon1, icon2 } from './icons';
+import metadata from "../../../../app-metadata.json";
+import { icon1, icon2 } from "./icons";
 
 function ExtensionRegistration() {
   const init = async () => {
@@ -18,16 +18,31 @@ function ExtensionRegistration() {
           getItems() {
             return [
               {
-                id: 'project-status',
-                url: '/index.html#/project-status',
-                label: 'Project Status',
+                id: "project-status",
+                url: "/index.html#/project-status",
+                label: "Project Status",
                 icon: icon1,
               },
-            // @todo YOUR HEADER BUTTONS DECLARATION SHOULD BE HERE
+              // @todo YOUR HEADER BUTTONS DECLARATION SHOULD BE HERE
             ];
           },
         },
-      }
+        secondaryNav: {
+          PROJECT: {
+            getItems() {
+              return [
+                {
+                  id: "project-status-left-panel",
+                  url: "/index.html#/project-status",
+                  label: "Project Status",
+                  icon: icon2,
+                },
+                // @todo YOUR SECONDARY NAV BUTTONS DECLARATION SHOULD BE HERE
+              ];
+            },
+          },
+        },
+      },
     });
   };
   init().catch(console.error);

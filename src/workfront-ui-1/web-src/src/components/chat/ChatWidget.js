@@ -2,38 +2,60 @@
  * <license header>
  */
 
-import { useEffect, useRef, useState } from "react";
-import { style } from "@react-spectrum/s2/style" with { type: "macro" };
+import { useEffect, useRef, useState } from 'react';
+import { style } from '@react-spectrum/s2/style' with { type: 'macro' };
+import { CloseButton } from '@react-spectrum/s2';
 import {
-  ActionButton,
-  TextField,
-  CloseButton,
-  ProgressCircle,
-} from "@react-spectrum/s2";
-import Send from "@react-spectrum/s2/icons/Send";
-import AiSparkles from "./AiSparkles";
-import { getImsAuth } from "../../api/imsAuth";
-import { streamChat } from "../../api/chatClient";
-import "./chat.css";
+  AIButton,
+  Chat,
+  Thread,
+  ThreadItem,
+  UserMessage,
+  PromptField,
+  PromptTokenField,
+  PromptFieldSubmitButton,
+} from '@react-spectrum/ai';
+import { getImsAuth } from '../../api/imsAuth';
+import { streamChat } from '../../api/chatClient';
+import './chat.css';
 
-const inputField = style({ flexGrow: 1, minWidth: 0 });
+// Chat fills the panel as a column so the PromptField stays pinned at the
+// bottom and the Thread (chats) scrolls above it.
+const chatStyles = style({ flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column', paddingX: 12 });
+// The chats section takes the remaining height and scrolls on overflow.
+const threadStyles = style({ flexGrow: 1, minHeight: 0, overflowY: 'auto' });
+// Assistant ("received") replies are app-rendered content in a ThreadItem.
+// Give them a distinct tinted bubble aligned to the right (marginStart: 'auto'
+// pushes a fit-content block to the end) so they read apart from the
+// left-aligned UserMessage bubbles.
+const assistantBubble = style({
+  font: 'body',
+  color: 'neutral',
+  whiteSpace: 'pre-wrap',
+  backgroundColor: 'blue-subtle',
+  borderRadius: 'lg',
+  paddingX: 12,
+  paddingY: 8,
+  width: 'fit',
+  maxWidth: '75%',
+  marginStart: 'auto',
+});
 
 let idCounter = 0;
 const nextId = () => `m${(idCounter += 1)}`;
 
 /**
- * Floating chat assistant: a bottom-right launcher opens a right-side panel.
- * Each submit streams a response from the agent API; history is held in state
- * for the current session. User messages align left, responses right; the
- * input and send button are disabled until the response finishes.
+ * Floating AI chat assistant, built on @react-spectrum/ai (Spectrum 2 AI
+ * components): an `AIButton` launcher opens a right-side panel containing a
+ * `Chat` (`Thread` of messages + `PromptField`). Each submit streams a response
+ * from the agent API; history is held in state for the current session, and the
+ * input is disabled (generating) until the response finishes.
  */
 function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const authRef = useRef(null);
-  const listRef = useRef(null);
 
   // Prefetch IMS auth (token + org) used to authorize the agent call.
   useEffect(() => {
@@ -42,23 +64,16 @@ function ChatWidget() {
     });
   }, []);
 
-  // Keep the newest message in view.
-  useEffect(() => {
-    if (listRef.current)
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages, open]);
-
-  const submit = async () => {
-    const prompt = input.trim();
+  const handleSubmit = async (text) => {
+    const prompt = (text || '').trim();
     if (!prompt || busy) return;
 
     const botId = nextId();
     setMessages((m) => [
       ...m,
-      { id: nextId(), role: "user", content: prompt },
-      { id: botId, role: "assistant", content: "" },
+      { id: nextId(), role: 'user', content: prompt },
+      { id: botId, role: 'assistant', content: '', streaming: true },
     ]);
-    setInput("");
     setBusy(true);
 
     try {
@@ -69,105 +84,61 @@ function ChatWidget() {
         imsToken: auth.imsToken,
         imsOrg: auth.imsOrg,
         onToken: (t) =>
-          setMessages((m) =>
-            m.map((x) =>
-              x.id === botId ? { ...x, content: x.content + t } : x,
-            ),
-          ),
+          setMessages((m) => m.map((x) => (x.id === botId ? { ...x, content: x.content + t } : x))),
       });
       setMessages((m) =>
         m.map((x) =>
-          x.id === botId && !x.content ? { ...x, content: "(no response)" } : x,
+          x.id === botId ? { ...x, content: x.content || '(no response)', streaming: false } : x,
         ),
       );
     } catch (e) {
       setMessages((m) =>
-        m.map((x) =>
-          x.id === botId ? { ...x, content: e.message, error: true } : x,
-        ),
+        m.map((x) => (x.id === botId ? { ...x, content: e.message, streaming: false } : x)),
       );
     } finally {
       setBusy(false);
     }
   };
 
-  const onKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
-  };
-
   return (
     <div className="es-chat">
       {!open && (
-        <button
-          type="button"
-          className="es-chat__launcher"
-          aria-label="Open assistant chat"
-          onClick={() => setOpen(true)}
-        >
-          <AiSparkles />
-        </button>
+        <span className="es-chat__launcher">
+          <AIButton size="L" aria-label="Open AI assistant" onPress={() => setOpen(true)}>
+            AI Assistant
+          </AIButton>
+        </span>
       )}
 
       {open && (
-        <section
-          className="es-chat__panel"
-          role="dialog"
-          aria-label="Assistant chat"
-        >
+        <section className="es-chat__panel" role="dialog" aria-label="AI Assistant chat">
           <header className="es-chat__header">
             <span className="es-chat__title">AI Assistant</span>
             <CloseButton onPress={() => setOpen(false)} />
           </header>
 
-          <div className="es-chat__messages" ref={listRef} aria-live="polite">
-            {messages.length === 0 && (
-              <p className="es-chat__empty">Ask a question to get started.</p>
-            )}
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`es-chat__row es-chat__row--${m.role}`}
-              >
-                <div
-                  className={`es-chat__bubble es-chat__bubble--${m.role}${m.error ? " es-chat__bubble--error" : ""}`}
-                >
-                  {m.content ? (
-                    m.content
-                  ) : m.role === "assistant" && busy ? (
-                    <ProgressCircle
-                      size="S"
-                      isIndeterminate
-                      aria-label="Waiting for response"
-                    />
+          <Chat styles={chatStyles}>
+            <Thread items={messages} aria-label="Conversation" styles={threadStyles}>
+              {(m) => (
+                <ThreadItem id={m.id} textValue={m.content} isStreaming={m.streaming}>
+                  {m.role === 'user' ? (
+                    <UserMessage>{m.content}</UserMessage>
                   ) : (
-                    ""
+                    <div className={assistantBubble}>{m.content || (m.streaming ? '…' : '')}</div>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
+                </ThreadItem>
+              )}
+            </Thread>
 
-          <div className="es-chat__input">
-            <TextField
+            <PromptField
               aria-label="Message"
-              value={input}
-              onChange={setInput}
-              onKeyDown={onKeyDown}
-              placeholder="Type a message…"
-              isDisabled={busy}
-              styles={inputField}
-            />
-            <ActionButton
-              aria-label="Send message"
-              onPress={submit}
-              isDisabled={busy || !input.trim()}
+              isGenerating={busy}
+              onSubmit={(value) => handleSubmit(value && value.toString ? value.toString() : String(value || ''))}
             >
-              <Send />
-            </ActionButton>
-          </div>
+              <PromptTokenField placeholder="Ask a question…" />
+              <PromptFieldSubmitButton />
+            </PromptField>
+          </Chat>
         </section>
       )}
     </div>

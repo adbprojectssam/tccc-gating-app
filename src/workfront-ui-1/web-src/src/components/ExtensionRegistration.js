@@ -10,6 +10,7 @@ import { icon1, icon2 } from "./icons";
 
 function ExtensionRegistration() {
   const init = async () => {
+    console.log('[ExtensionRegistration] registering with host:', extensionId);
     const guestConnection = await register({
       metadata,
       methods: {
@@ -44,6 +45,7 @@ function ExtensionRegistration() {
         },
       },
     });
+    console.info("[ExtensionRegistration] registered with host:", guestConnection, guestConnection.sharedContext);
   };
   init().catch(console.error);
 

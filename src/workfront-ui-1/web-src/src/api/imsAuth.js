@@ -7,8 +7,7 @@
  * context — used to authorize Adobe API calls (e.g. the agent chat). Returns
  * nulls (never throws) when unavailable, e.g. local dev with no host.
  */
-import { attach } from '@adobe/uix-guest';
-import { extensionId } from '../components/Constants';
+import { getGuestConnection } from './guestConnection';
 
 function withTimeout(promise, ms) {
   let timer;
@@ -20,7 +19,7 @@ function withTimeout(promise, ms) {
 
 export async function getImsAuth() {
   try {
-    const conn = await withTimeout(attach({ id: extensionId }), 3000);
+    const conn = await withTimeout(getGuestConnection(), 3000);
     const context = conn && conn.sharedContext;
     const auth = context ? await context.get('auth') : null;
     return {

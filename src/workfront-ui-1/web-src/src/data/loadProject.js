@@ -18,8 +18,7 @@
 import { fetchProject } from "../api/workfrontClient";
 import { mapWorkfrontProject } from "./mapWorkfrontProject";
 import { mockProjectResponse } from "./mockProjectResponse";
-import { attach } from "@adobe/uix-guest";
-import { extensionId } from "../components/Constants";
+import { getGuestConnection } from "../api/guestConnection";
 
 /**
  * True only when served from the local dev server (`aio app run`, localhost).
@@ -53,13 +52,13 @@ async function firstContextValue(context, keys) {
 
 /** Which project to show, which Workfront host, and the IMS token for the action. */
 async function getProjectContext() {
-  // A custom view opened from a Workfront menu item connects to the host with
-  // `register` (the host connects TO this guest and supplies sharedContext).
-  // `attach` — which pairs with an already-registered guest server — does not
-  // complete the handshake for a top-level view and hangs until the timeout.
+  // Use the single shared guest connection for this iframe (see
+  // api/guestConnection.js). Opening a second `attach()` here — while the chat
+  // widget's auth opens its own — races two guests in one iframe and breaks the
+  // host handshake.
   // eslint-disable-next-line no-console
-  console.info("[loadProject] connecting to Workfront host:", extensionId);
-  const guestConnection = await attach({ id: extensionId });
+  console.info("[loadProject] connecting to Workfront host…");
+  const guestConnection = await getGuestConnection();
   // eslint-disable-next-line no-console
   console.info("[loadProject] connected; reading shared context");
   const context = guestConnection && guestConnection.sharedContext;

@@ -61,3 +61,124 @@
   font-weight: 700;
   color: #131313;
 }
+
+/* ---------- Rendered Markdown (assistant replies) ---------- */
+.es-chat__md > :first-child {
+  margin-top: 0;
+}
+.es-chat__md > :last-child {
+  margin-bottom: 0;
+}
+.es-chat__md p {
+  margin: 0 0 8px;
+}
+.es-chat__md h1,
+.es-chat__md h2,
+.es-chat__md h3,
+.es-chat__md h4,
+.es-chat__md h5,
+.es-chat__md h6 {
+  margin: 12px 0 6px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.es-chat__md h1 {
+  font-size: 18px;
+}
+.es-chat__md h2 {
+  font-size: 16px;
+}
+.es-chat__md h3 {
+  font-size: 15px;
+}
+.es-chat__md h4,
+.es-chat__md h5,
+.es-chat__md h6 {
+  font-size: 14px;
+}
+.es-chat__md ul,
+.es-chat__md ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+.es-chat__md li {
+  margin: 2px 0;
+}
+.es-chat__md li > p {
+  margin: 0;
+}
+.es-chat__md a {
+  color: #0265dc;
+  text-decoration: underline;
+}
+.es-chat__md code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.es-chat__md pre {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.es-chat__md pre code {
+  padding: 0;
+  background: none;
+}
+.es-chat__md blockquote {
+  margin: 0 0 8px;
+  padding-left: 10px;
+  border-left: 3px solid #d0d0d0;
+  color: #4b4b4b;
+}
+.es-chat__md hr {
+  border: none;
+  border-top: 1px solid #e1e1e1;
+  margin: 8px 0;
+}
+.es-chat__md table {
+  border-collapse: collapse;
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.es-chat__md th,
+.es-chat__md td {
+  border: 1px solid #d0d0d0;
+  padding: 4px 8px;
+  text-align: left;
+}
+.es-chat__md th {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ---------- Suggested questions / actions (clickable quick replies) ---------- */
+.es-chat__suggestions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 10px;
+}
+.es-chat__suggestion {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  color: #0265dc;
+  background: #fff;
+  border: 1px solid #b8d4fb;
+  border-radius: 14px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.es-chat__suggestion:hover:not(:disabled) {
+  background: #eef5ff;
+}
+.es-chat__suggestion:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

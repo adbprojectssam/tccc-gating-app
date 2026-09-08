@@ -16,8 +16,10 @@
     "react": "^19",
     "react-dom": "^19",
     "react-error-boundary": "^5",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^6.3.0",
-    "regenerator-runtime": "^0.13.5"
+    "regenerator-runtime": "^0.13.5",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
@@ -66,5 +68,8 @@
     "@react-spectrum/s2/Tooltip": "./node_modules/@react-spectrum/s2/dist/exports/Tooltip.mjs",
     "@react-spectrum/s2/mergeStyles": "./node_modules/@react-spectrum/s2/dist/exports/mergeStyles.mjs",
     "@react-spectrum/s2/pressScale": "./node_modules/@react-spectrum/s2/dist/exports/pressScale.mjs"
+  },
+  "@parcel/resolver-default": {
+    "packageExports": true
   }
 }

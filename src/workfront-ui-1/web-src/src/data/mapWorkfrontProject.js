@@ -9,9 +9,8 @@
  * AI Recommendation, Key KPIs, the tab panels, and per-gate pipeline statuses)
  * render as EMPTY STATES — present but with no rows/items.
  *
- * Static UI chrome (button/tab/section labels, templates) comes from LABELS so
- * it stays consistent with the mock. Header CTAs and view tabs are app chrome,
- * so they are kept (the tabs just have empty panels).
+ * Static UI chrome (button/section labels, templates) comes from LABELS so it
+ * stays consistent with the mock. Header CTAs are app chrome, so they are kept.
  *
  * Mapping notes / assumptions:
  *  - The gate pipeline is derived from `raw.gates` — tasks whose name starts
@@ -87,16 +86,9 @@ const DEFAULT_DISTRIBUTION = [7, 14, 17, 21, 26, 31, 36, 41, 46, 51, 47, 42, 37,
 
 // Header CTAs — app chrome, identical to the mock.
 const HEADER_ACTIONS = [
-  { id: 'pre-read', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'tutorials' },
-  { id: 'pre-read-slides', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
+  { id: 'artifacts', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'file' },
+  { id: 'pre-read', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
   { id: 'need-attention', label: LABELS.actions.needAttention, variant: 'negative', fillStyle: 'fill', icon: 'alertTriangle' },
-];
-
-// View tabs — chrome; panels are empty (no API source for their content).
-const EMPTY_TABS = [
-  { id: 'executive-summary', label: LABELS.tabs.executiveSummary, icon: 'file', panel: { heading: LABELS.tabs.executiveSummary, paragraph: '' } },
-  { id: 'learning-plan', label: LABELS.tabs.learningPlan, icon: 'education', panel: { heading: LABELS.tabs.learningPlan, items: [] } },
-  { id: 'risk-view', label: LABELS.tabs.riskView, icon: 'alertTriangle', panel: { heading: LABELS.tabs.riskView, risks: [] } },
 ];
 
 const APPROVAL_COLUMNS = [
@@ -358,8 +350,6 @@ export function mapWorkfrontProject(raw) {
       items: [],
       primaryAction: { id: 'open-risk-view', label: LABELS.actions.openFullRiskView },
     },
-
-    tabs: EMPTY_TABS,
 
     pipeline: { title: LABELS.sections.gatePipeline, currentKey, gates: pipelineGates },
     defaultGate: currentKey,

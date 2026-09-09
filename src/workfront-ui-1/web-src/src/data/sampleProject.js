@@ -25,8 +25,8 @@ export const sampleProject = {
     title: 'LA-MX-BODYARMOR ZERO_LAOU',
     subtitle: 'Brazil · Sparkling Flavors · Peter William',
     actions: [
-      { id: 'pre-read', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'tutorials' },
-      { id: 'pre-read-slides', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
+      { id: 'artifacts', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'file' },
+      { id: 'pre-read', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
       { id: 'need-attention', label: LABELS.actions.needAttention, variant: 'negative', fillStyle: 'fill', icon: 'alertTriangle' },
     ],
   },
@@ -40,48 +40,6 @@ export const sampleProject = {
     ],
     primaryAction: { id: 'open-risk-view', label: LABELS.actions.openFullRiskView },
   },
-
-  tabs: [
-    {
-      id: 'executive-summary',
-      label: LABELS.tabs.executiveSummary,
-      icon: 'file',
-      panel: {
-        heading: LABELS.tabs.executiveSummary,
-        paragraph:
-          "Coca-Cola Zero Sugar - Cherry is a new flavor extension filling a gap in Coca-Cola Zero Sugar's flavor lineup for Brazil. Currently at Gate 2 - Decision to develop, flagged Needs Attention: margin analysis is overdue and TECH sign-off is pending, so the AI recommends a hold. Volume is tracking ahead of plan (80k UC, +23% vs Gate 1) with a healthy margin profile (34% GP, +3pts vs benchmark). No CapEx required. Next gate target: February 2027.",
-      },
-    },
-    {
-      id: 'learning-plan',
-      label: LABELS.tabs.learningPlan,
-      icon: 'education',
-      panel: {
-        heading: 'Learning plan - what this gate is testing',
-        items: [
-          { id: 'trial-rate', text: 'Trial rate (first 90 days) - target 15%, not yet reported' },
-          { id: 'distribution', text: 'Distribution ramp -  target 12,000 stores, currently 8,400 and tracking' },
-          { id: 'awareness', text: 'Unaided brand awareness lift - target +4pts, not yet reported' },
-          { id: 'margin-durability', text: 'Margin durability  - whether 34% GP margin holds once COGS assumptions are finalized' },
-        ],
-      },
-    },
-    {
-      id: 'risk-view',
-      label: LABELS.tabs.riskView,
-      icon: 'alertTriangle',
-      panel: {
-        heading: LABELS.tabs.riskView,
-        summary: { strong: '4 open risks', rest: '- 1 high, 3 medium' },
-        risks: [
-          { id: 'margin', title: 'Margin analysis overdue since June 12 - blocking FIN sign-off', severity: { label: 'High', tone: 'negative' } },
-          { id: 'formula', title: 'Formula stability at shelf temperature - mitigation in progress', severity: { label: 'Medium', tone: 'notice' } },
-          { id: 'senasica', title: 'SENASICA regulatory label review pending', severity: { label: 'Medium', tone: 'notice' } },
-          { id: 'tech', title: 'TECH feasibility still in review', severity: { label: 'Medium', tone: 'notice' } },
-        ],
-      },
-    },
-  ],
 
   pipeline: {
     title: LABELS.sections.gatePipeline,

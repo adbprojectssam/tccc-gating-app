@@ -95,39 +95,6 @@
   flex-wrap: wrap;
 }
 
-/* ---------- View tabs (underline indicator; toggle behavior) ---------- */
-.es-tabs {
-  display: flex;
-  gap: 24px;
-  border-bottom: 1px solid var(--es-border);
-}
-
-.es-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 2px;
-  margin: 0 0 -1px;
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  font: inherit;
-  font-size: 14px;
-  color: var(--es-text-subdued);
-}
-
-.es-tab svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-
-.es-tab--active {
-  color: var(--es-text);
-  font-weight: 700;
-  border-bottom-color: var(--es-text);
-}
-
 /* ---------- Section titles / card head (layout only) ---------- */
 .es-section-title {
   margin: 0 0 12px;
@@ -747,6 +714,173 @@
 .es-attention__footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* ---------- Artifact upload dialog ---------- */
+.es-artifact {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.es-artifact__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.es-artifact__title {
+  margin: 0;
+  padding-right: 24px;
+}
+.es-artifact__desc {
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+/* Dialogs render in a portal outside .es-dashboard, so the --es-* tokens don't
+   resolve here — mirror the resolved hex values (same as the token block). */
+.es-dropzone {
+  border: 1px dashed #dadada;
+  border-radius: 10px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.es-dropzone svg {
+  margin-bottom: 10px;
+  color: #131313;
+}
+.es-dropzone__title {
+  margin: 0;
+}
+.es-dropzone__subtitle {
+  margin: 0 0 6px;
+}
+.es-dropzone--over {
+  border-style: solid;
+  border-color: #3b63fb;
+  background: #e5f0fe;
+}
+.es-dropzone--over svg {
+  color: #3b63fb;
+}
+/* Visually hidden native file input (Browse files triggers it). */
+.es-dropzone__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.es-artifact__uploaded {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.es-artifact__uploaded-title {
+  margin: 0;
+}
+.es-artifact__file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.es-artifact__file > svg,
+.es-preread__file > svg {
+  width: 24px;
+  height: 28px;
+  flex: none;
+  --iconPrimary: #717171;
+}
+.es-artifact__file-meta,
+.es-preread__file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.es-artifact__footer,
+.es-preread__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* ---------- Pre-read dialog ---------- */
+.es-preread {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.es-preread__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.es-preread__title {
+  margin: 0;
+  padding-right: 24px;
+}
+.es-preread__desc {
+  margin: 0;
+  line-height: 1.4;
+}
+.es-preread__notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fdf0e2;
+}
+.es-preread__notice-text {
+  line-height: 1.45;
+}
+.es-preread__notice > svg {
+  flex: none;
+  --iconPrimary: #d45b00;
+}
+.es-preread__source {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.es-preread__source-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.es-preread__source-head > svg {
+  flex: none;
+  --iconPrimary: #079355;
+}
+.es-preread__file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.es-preread__generated {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: #079355;
+}
+.es-preread__generated > svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  --iconPrimary: #079355;
 }
 
 /* ---------- Misc ---------- */

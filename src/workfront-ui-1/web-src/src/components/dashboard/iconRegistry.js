@@ -12,7 +12,6 @@ import Tutorials from '@react-spectrum/s2/icons/Tutorials';
 import Preview from '@react-spectrum/s2/icons/Preview';
 import Slideshow from '@react-spectrum/s2/icons/Slideshow';
 import AlertTriangle from '@react-spectrum/s2/icons/AlertTriangle';
-import Education from '@react-spectrum/s2/icons/Education';
 import Checkmark from '@react-spectrum/s2/icons/Checkmark';
 import CheckmarkCircle from '@react-spectrum/s2/icons/CheckmarkCircle';
 import InfoCircle from '@react-spectrum/s2/icons/InfoCircle';
@@ -26,8 +25,7 @@ const registry = {
   tutorials: Tutorials, // Pre-read CTA (Figma: S2_Icon_Tutorials)
   preview: Preview, // "in review" factor chip (Figma: S2_Icon_Preview)
   slideshow: Slideshow, // Pre-read Slides CTA
-  alertTriangle: AlertTriangle, // Risk View tab + Need Attention CTA
-  education: Education, // Learning Plan tab
+  alertTriangle: AlertTriangle, // Need Attention CTA
   checkmark: Checkmark, // completed factor chip + learning checklist
   checkmarkCircle: CheckmarkCircle, // "Approved Unanimously" banner (Figma: S2_Icon_CheckmarkCircle)
   infoCircle: InfoCircle, // "Locked" info banner (Figma: S2_Icon_InfoCircle)

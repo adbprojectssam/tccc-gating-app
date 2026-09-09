@@ -82,6 +82,8 @@ function ChatWidget() {
   // Whether the user is parked at the bottom; controls streaming auto-scroll so
   // we never yank them down while they read earlier messages.
   const stickToBottomRef = useRef(true);
+  // The newest message's DOM node, scrolled into view as the response arrives.
+  const lastMsgRef = useRef(null);
 
   // On mount, read the chat context (IMS token + project id) from the shared
   // guest connection, then invisibly prime the agent with the current project
@@ -128,11 +130,11 @@ function ChatWidget() {
     return () => el.removeEventListener('scroll', onScroll);
   }, [open]);
 
-  // Keep the newest content scrolled into view as the response streams in.
+  // Scroll the current (newest) response element into view as it arrives and
+  // streams — unless the user has scrolled up to read earlier messages.
   useEffect(() => {
-    const el = scrollElRef.current;
-    if (el && stickToBottomRef.current) {
-      el.scrollTop = el.scrollHeight;
+    if (stickToBottomRef.current && lastMsgRef.current) {
+      lastMsgRef.current.scrollIntoView({ block: 'end' });
     }
   }, [messages, open]);
 
@@ -148,6 +150,9 @@ function ChatWidget() {
     ]);
     setInput('');
     setBusy(true);
+    // The user just asked — follow the incoming answer into view even if they
+    // had scrolled up.
+    stickToBottomRef.current = true;
 
     try {
       const auth = authRef.current || (await getImsAuth());
@@ -190,7 +195,17 @@ function ChatWidget() {
   // Render an assistant reply: markdown body plus, once streaming is done, any
   // "Suggested questions/actions" turned into clickable prompts.
   const renderAssistant = (m) => {
-    if (!m.content) return m.streaming ? '…' : '';
+    if (!m.content) {
+      return m.streaming ? (
+        <span className="es-chat__typing" role="status" aria-label="Assistant is typing">
+          <span className="es-chat__dot" />
+          <span className="es-chat__dot" />
+          <span className="es-chat__dot" />
+        </span>
+      ) : (
+        ''
+      );
+    }
     // While streaming, the suggestions list is incomplete — show raw markdown.
     if (m.streaming) {
       return <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>;
@@ -227,6 +242,8 @@ function ChatWidget() {
     }
   };
 
+  const lastId = messages.length > 0 ? messages[messages.length - 1].id : null;
+
   return (
     <div className="es-chat">
       {!open && (
@@ -256,7 +273,12 @@ function ChatWidget() {
                   {m.role === 'user' ? (
                     <UserMessage>{m.content}</UserMessage>
                   ) : (
-                    <div className={`${assistantBubble} es-chat__md`}>{renderAssistant(m)}</div>
+                    <div
+                      ref={m.id === lastId ? lastMsgRef : undefined}
+                      className={`${assistantBubble} es-chat__md`}
+                    >
+                      {renderAssistant(m)}
+                    </div>
                   )}
                 </ThreadItem>
               )}

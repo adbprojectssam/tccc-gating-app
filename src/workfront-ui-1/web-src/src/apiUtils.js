@@ -21,6 +21,7 @@ const PROJECT_FIELDS = [
 const TASK_FIELDS = [
   "name",
   "status",
+  "condition",
   "parent:name",
   "assignedToID",
   "DE:PMO Comments",

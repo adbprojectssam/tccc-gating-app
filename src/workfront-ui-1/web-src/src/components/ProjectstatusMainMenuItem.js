@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { ProgressCircle } from "@react-spectrum/s2";
 import { style } from "@react-spectrum/s2/style" with { type: "macro" };
 import GatingDashboard from "./dashboard/GatingDashboard";
-import ChatWidget from "./chat/ChatWidget";
+import GatingAssistant from "./chat/GatingAssistant";
 import { loadProject } from "../data/loadProject";
 
 const centered = style({
@@ -34,6 +34,10 @@ const errorBody = style({ font: "body", color: "neutral-subdued", maxWidth: 384 
  */
 const ProjectstatusMainMenuItem = () => {
   const [state, setState] = useState({ status: "loading" });
+  // Gating Assistant docked panel: open state + maximize (350 → 500). Its width
+  // is published as a CSS var on the shell so the dashboard reflows (pushes).
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantMax, setAssistantMax] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -66,11 +70,23 @@ const ProjectstatusMainMenuItem = () => {
     );
   }
 
+  const assistantWidth = assistantOpen ? (assistantMax ? 500 : 350) : 0;
+
   return (
-    <>
-      {content}
-      <ChatWidget />
-    </>
+    <div className="es-shell" style={{ "--es-assistant-w": `${assistantWidth}px` }}>
+      <div className="es-shell__main">{content}</div>
+      <GatingAssistant
+        open={assistantOpen}
+        maximized={assistantMax}
+        subtitle={state.project && state.project.header && state.project.header.title}
+        onOpen={() => setAssistantOpen(true)}
+        onClose={() => {
+          setAssistantOpen(false);
+          setAssistantMax(false);
+        }}
+        onToggleMaximize={() => setAssistantMax((v) => !v)}
+      />
+    </div>
   );
 };
 

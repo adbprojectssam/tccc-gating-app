@@ -1,0 +1,468 @@
+/*
+ * <license header>
+ *
+ * Gating Assistant — docked right rail (Figma node 2318:133342). Opening it
+ * pushes the dashboard (the shell adds right padding equal to the panel width);
+ * the Maximize toggle grows it from 350px to 500px.
+ */
+
+/* ---------- Launcher (closed state) ---------- */
+.es-ga__launcher {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 9999px;
+  color: #fff;
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  background-image: linear-gradient(122.88deg, #d73220 0%, #d92361 33%, #7155fa 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.es-ga__launcher:hover {
+  filter: brightness(1.06);
+}
+
+.es-ga__launcher svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------- Panel ---------- */
+.es-ga {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 350px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-left: 1px solid #e1e1e1;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+  color: #131313;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.es-ga--max {
+  width: 500px;
+}
+
+/* ---------- Header (dark) ---------- */
+.es-ga__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 16px;
+  background: #1d1d1d;
+  color: #fff;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.es-ga__avatar {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-image: linear-gradient(122.88deg, #d73220 0%, #d92361 33%, #7155fa 100%);
+}
+
+.es-ga__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.es-ga__title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.es-ga__subtitle {
+  font-size: 12px;
+  color: #c6c6c6;
+  line-height: 1.3;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.es-ga__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.es-ga__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.es-ga__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.es-ga__icon-btn svg {
+  width: 20px;
+  height: 20px;
+  --iconPrimary: #fff;
+}
+
+/* ---------- Body (scroll) ---------- */
+.es-ga__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.es-ga__msg--user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.es-ga__user {
+  max-width: 85%;
+  background: #f0f0f0;
+  color: #131313;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.es-ga__assistant {
+  font-size: 14px;
+  color: #131313;
+}
+
+/* ---------- Rendered markdown (assistant) ---------- */
+.es-ga__md> :first-child {
+  margin-top: 0;
+}
+
+.es-ga__md> :last-child {
+  margin-bottom: 0;
+}
+
+.es-ga__md p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.es-ga__md h1,
+.es-ga__md h2,
+.es-ga__md h3,
+.es-ga__md h4,
+.es-ga__md h5,
+.es-ga__md h6 {
+  margin: 14px 0 6px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.es-ga__md h1 {
+  font-size: 17px;
+}
+
+.es-ga__md h2 {
+  font-size: 16px;
+}
+
+.es-ga__md h3,
+.es-ga__md h4,
+.es-ga__md h5,
+.es-ga__md h6 {
+  font-size: 14px;
+}
+
+.es-ga__md ul,
+.es-ga__md ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.es-ga__md li {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.es-ga__md li>p {
+  margin: 0;
+}
+
+.es-ga__md a {
+  color: #0265dc;
+  text-decoration: underline;
+}
+
+.es-ga__md code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.es-ga__md pre {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.es-ga__md hr {
+  border: none;
+  border-top: 1px solid #e1e1e1;
+  margin: 12px 0;
+}
+
+.es-ga__md table {
+  border-collapse: collapse;
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.es-ga__md th,
+.es-ga__md td {
+  border: 1px solid #d0d0d0;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+/* ---------- Feedback thumbs ---------- */
+.es-ga__feedback {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* ---------- What would you like to do next? ---------- */
+.es-ga__next {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e1e1e1;
+}
+
+.es-ga__next-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.es-ga__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.es-ga__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: #ececec;
+  color: #131313;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+  text-align: left;
+}
+
+.es-ga__chip:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.es-ga__chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.es-ga__chip svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  --iconPrimary: #505050;
+}
+
+/* ---------- Typing / generating ---------- */
+.es-ga__typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.es-ga__typing-text {
+  font-size: 13px;
+  color: #505050;
+}
+
+.es-ga__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #b0b0b0;
+  animation: es-ga-typing 1.2s infinite ease-in-out;
+}
+
+.es-ga__dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.es-ga__dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes es-ga-typing {
+
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+
+  30% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .es-ga__dot {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ---------- Footer / input ---------- */
+.es-ga__footer {
+  flex: none;
+  padding: 12px 16px 16px;
+  border-top: 1px solid #e1e1e1;
+}
+
+.es-ga__inputbox {
+  border: 1px solid #d0d0d0;
+  border-radius: 12px;
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.es-ga__inputbox:focus-within {
+  border-color: #3b63fb;
+}
+
+.es-ga__input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.es-ga__attach {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #131313;
+}
+
+.es-ga__attach:hover {
+  background: #f0f0f0;
+}
+
+.es-ga__attach svg {
+  width: 22px;
+  height: 22px;
+  --iconPrimary: #131313;
+}
+
+.es-ga__send {
+  width: 36px;
+  height: 36px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #1d1d1d;
+  color: #fff;
+}
+
+.es-ga__send:disabled {
+  background: #c6c6c6;
+  cursor: default;
+}
+
+.es-ga__send svg {
+  width: 20px;
+  height: 20px;
+  --iconPrimary: #fff;
+}
+
+.es-ga__disclaimer {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 11px;
+  color: #717171;
+  line-height: 1.4;
+}
+
+.es-ga__disclaimer a {
+  color: #717171;
+  text-decoration: underline;
+}
+
+/* ---------- Shell (push the dashboard) ---------- */
+.es-shell__main {
+  padding-right: var(--es-assistant-w, 0px);
+  transition: padding-right 0.18s ease;
+}
+
+/* Everything reflows into the reduced width EXCEPT Key Metrics, which keep
+   their full width and sit under the panel (per Figma) — undo the shell padding
+   for that row only via an equal negative margin. */
+.es-shell__main .es-metrics {
+  margin-right: calc(-1 * var(--es-assistant-w, 0px));
+  transition: margin-right 0.18s ease;
+}

@@ -9,6 +9,7 @@ import ProjectHeader from './ProjectHeader';
 import NeedAttentionDialog from './NeedAttentionDialog';
 import ArtifactDialog from './ArtifactDialog';
 import PreReadDialog from './PreReadDialog';
+import FieldReviewDialog from './FieldReviewDialog';
 import KeyMetrics from './KeyMetrics';
 import GatePipeline from './GatePipeline';
 import GateDetailCard from './GateDetailCard';
@@ -35,11 +36,17 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
   const [selectedGate, setSelectedGate] = useState('1');
   const [isAttentionOpen, setAttentionOpen] = useState(false);
   const [isArtifactOpen, setArtifactOpen] = useState(false);
+  // Bumped every time the Artifacts popup opens so it remounts fresh — the
+  // previous session's uploaded-file list is cleared (see the `key` below).
+  const [artifactSession, setArtifactSession] = useState(0);
   const [isPreReadOpen, setPreReadOpen] = useState(false);
+  const [isFieldReviewOpen, setFieldReviewOpen] = useState(false);
   // Shared across the two header dialogs: the saved source artifact(s) and, once
   // generated, the pre-read metadata. UI-only session state for now.
   const [savedArtifacts, setSavedArtifacts] = useState([]);
   const [preRead, setPreRead] = useState(null);
+  // Document ids sent to the field-extraction API when the field-review opens.
+  const [reviewDocumentIds, setReviewDocumentIds] = useState([]);
 
   if (!project) return null;
 
@@ -57,6 +64,8 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
       return;
     }
     if (id === 'artifacts') {
+      // New session each open → the dialog remounts with an empty file list.
+      setArtifactSession((n) => n + 1);
       setArtifactOpen(true);
       return;
     }
@@ -68,12 +77,28 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
   };
 
   const handleGeneratePreRead = (readyFiles) => {
-    // Phase 1: files are uploaded to Workfront. Record them and close; the
-    // generation progress + field-review flow (Phase 2) continues from here.
+    // Files are uploaded to Workfront. Record them, then send their document ids
+    // to the extraction API by opening the field-review dialog.
+    const ids = readyFiles.map((f) => f.documentId).filter(Boolean);
     setSavedArtifacts(readyFiles.map((f) => ({ id: f.documentId, name: f.name, size: f.size })));
+    setReviewDocumentIds(ids);
     setArtifactOpen(false);
+    setFieldReviewOpen(true);
+  };
+
+  const handleConfirmFields = (finalValues) => {
+    // Extracted (and user-confirmed) field values. Sharing the pre-read / saving
+    // back to Workfront is a later phase — record and close for now.
     // eslint-disable-next-line no-console
-    console.info('[artifact] generate pre-read for documents:', readyFiles.map((f) => f.documentId));
+    console.info('[fieldreview] confirm & share pre-read:', finalValues);
+    setFieldReviewOpen(false);
+  };
+
+  const handleSaveDraftFields = (draftValues) => {
+    // Partial (unshared) review — persisting the draft is a later phase.
+    // eslint-disable-next-line no-console
+    console.info('[fieldreview] saved draft:', draftValues);
+    setFieldReviewOpen(false);
   };
 
   const handleGenerate = () => {
@@ -125,8 +150,20 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
       <DialogContainer onDismiss={() => setArtifactOpen(false)}>
         {isArtifactOpen && (
           <ArtifactDialog
+            key={artifactSession}
             onGenerate={handleGeneratePreRead}
             onCancel={() => setArtifactOpen(false)}
+          />
+        )}
+      </DialogContainer>
+
+      <DialogContainer onDismiss={() => setFieldReviewOpen(false)}>
+        {isFieldReviewOpen && (
+          <FieldReviewDialog
+            documentIds={reviewDocumentIds}
+            onCancel={() => setFieldReviewOpen(false)}
+            onConfirm={handleConfirmFields}
+            onSaveDraft={handleSaveDraftFields}
           />
         )}
       </DialogContainer>

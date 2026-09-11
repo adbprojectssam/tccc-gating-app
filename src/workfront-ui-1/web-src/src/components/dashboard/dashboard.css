@@ -810,7 +810,8 @@
   color: #d73220;
 }
 .es-artifact__footer,
-.es-preread__footer {
+.es-preread__footer,
+.es-fieldreview__footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -885,6 +886,133 @@
   height: 14px;
   flex: none;
   --iconPrimary: #079355;
+}
+
+/* ---------- Field review dialog ---------- */
+.es-fieldreview {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.es-fieldreview__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.es-fieldreview__title {
+  margin: 0;
+  padding-right: 24px;
+}
+.es-fieldreview__desc {
+  margin: 0;
+  line-height: 1.4;
+}
+.es-fieldreview__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 0;
+}
+.es-fieldreview__notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fdecea;
+}
+.es-fieldreview__notice > svg {
+  flex: none;
+  --iconPrimary: #d73220;
+}
+.es-fieldreview__subtitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f03823;
+  line-height: 1.35;
+}
+.es-fieldreview__empty {
+  padding: 8px 0;
+}
+.es-fieldreview__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+/* Field cards — valid (green) vs needs-review (red). */
+.es-fieldreview__card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+}
+.es-fieldreview__card--valid {
+  background: #d7f7e1;
+}
+.es-fieldreview__card--review {
+  background: #ffebe8;
+}
+.es-fieldreview__card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.es-fieldreview__card-title {
+  margin: 0;
+}
+.es-fieldreview__card-value,
+.es-fieldreview__card-hint {
+  margin: 0;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.es-fieldreview__card-icon {
+  flex: none;
+}
+.es-fieldreview__card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.es-fieldreview__card-icon--ok svg {
+  --iconPrimary: #079355;
+}
+.es-fieldreview__card-icon--warn svg {
+  --iconPrimary: #f03823;
+}
+.es-fieldreview__enter {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #131313;
+  text-decoration: underline;
+}
+.es-fieldreview__editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.es-fieldreview__editor > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* ---------- Misc ---------- */

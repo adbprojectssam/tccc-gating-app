@@ -58,6 +58,27 @@ export async function uploadArtifact({ projectId, hostname, imsToken, imsOrg, fi
   return result.data;
 }
 
+/**
+ * Send the uploaded document ids (with the project id) to the pre-read
+ * extraction webhook via the `extract-fields` action. Resolves to the array of
+ * extracted fields `[{ field, value, page, evidence, confidence, source }]`.
+ * Throws on error.
+ */
+export async function extractFields({ projectId, documentIds, imsToken, imsOrg }) {
+  const actionUrl = resolveUrl('extract-fields');
+  if (!actionUrl) throw new Error('extract-fields action is not configured — build the app');
+
+  const result = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
+    projectId,
+    documentIds,
+  });
+  if (!result || result.error || !result.data) {
+    const detail = (result && result.error && (result.error.error || result.error)) || 'unknown error';
+    throw new Error(`Field extraction failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+  }
+  return result.data;
+}
+
 /** Delete a Workfront document by id. Throws on error. */
 export async function deleteArtifact({ documentId, hostname, imsToken, imsOrg }) {
   const actionUrl = resolveUrl('delete-artifact');
@@ -74,4 +95,4 @@ export async function deleteArtifact({ documentId, hostname, imsToken, imsOrg })
   return result.data || {};
 }
 
-export default { uploadArtifact, deleteArtifact };
+export default { uploadArtifact, extractFields, deleteArtifact };

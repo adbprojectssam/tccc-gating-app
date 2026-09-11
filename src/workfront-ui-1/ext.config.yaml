@@ -19,6 +19,28 @@ runtimeManifest:
           annotations:
             require-adobe-auth: true
             final: true
+        upload-artifact:
+          function: actions/upload-artifact/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+            WORKFRONT_API_KEY: $WORKFRONT_API_KEY
+            WORKFRONT_ALLOWED_HOSTS: $WORKFRONT_ALLOWED_HOSTS
+          annotations:
+            require-adobe-auth: true
+            final: true
+        delete-artifact:
+          function: actions/delete-artifact/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+            WORKFRONT_API_KEY: $WORKFRONT_API_KEY
+            WORKFRONT_ALLOWED_HOSTS: $WORKFRONT_ALLOWED_HOSTS
+          annotations:
+            require-adobe-auth: true
+            final: true
 hooks:
   pre-app-run: node node_modules/@adobe/uix-guest/scripts/generate-metadata.js
   pre-app-build: node node_modules/@adobe/uix-guest/scripts/generate-metadata.js

@@ -342,6 +342,10 @@ export function mapWorkfrontProject(raw) {
   }
 
   return {
+    // Workfront portfolio the project belongs to — used to prime the Gating
+    // Assistant with the project's event/non-event classification.
+    portfolioId: raw.portfolioID || null,
+
     header: { title: raw.name || '', subtitle, actions: HEADER_ACTIONS },
 
     // Empty state — no "need attention" API.

@@ -28,3 +28,14 @@ const TASK_FIELDS = [
   "actualCompletionDate",
   "plannedCompletionDate",
 ];
+
+const EXPECTED_VALIDATION_RESPONSE = [
+  {
+    field: "string",
+    value: "<actual value extracted WF/DOC>",
+    page: 0,
+    evidence: "string",
+    confidence: 0.0,
+    source: "WF/DOC",
+  },
+];

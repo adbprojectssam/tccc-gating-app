@@ -2,11 +2,13 @@
  * <license header>
  */
 
-import { useRef, useState } from 'react';
-import { CustomDialog, CloseButton, Button, ActionButton } from '@react-spectrum/s2';
+import { useEffect, useRef, useState } from 'react';
+import { CustomDialog, CloseButton, Button, ActionButton, ProgressCircle } from '@react-spectrum/s2';
 import FileText from '@react-spectrum/s2/icons/FileText';
 import Close from '@react-spectrum/s2/icons/Close';
 import { LABELS } from '../../constants/labels';
+import { getImsAuth } from '../../api/imsAuth';
+import { uploadArtifact, deleteArtifact } from '../../api/artifactClient';
 import { dashboardBase, dialogTitle, dialogDesc, dropzoneTitle, bannerTitle, bodyText, detailText } from './styles';
 
 let uid = 0;
@@ -17,42 +19,12 @@ const nextUid = () => `f${(uid += 1)}`;
 function DropFileIcon() {
   return (
     <svg viewBox="0 0 40 40" width="44" height="44" fill="none" aria-hidden="true" focusable="false">
-      <path
-        d="M22 4H11a3 3 0 0 0-3 3v21"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M22 4l10 10v14"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M22 4v7a3 3 0 0 0 3 3h7"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 30.5c0 1.7 1.3 3 3 3h18c1.7 0 3-1.3 3-3"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeDasharray="0.5 4.5"
-      />
+      <path d="M22 4H11a3 3 0 0 0-3 3v21" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M22 4l10 10v14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M22 4v7a3 3 0 0 0 3 3h7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 30.5c0 1.7 1.3 3 3 3h18c1.7 0 3-1.3 3-3" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeDasharray="0.5 4.5" />
       <path d="M20 12.5v10.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      <path
-        d="M15.5 18.5l4.5 4.5 4.5-4.5"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M15.5 18.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -66,28 +38,91 @@ function formatSize(bytes) {
 }
 
 /**
- * "Artifact" upload dialog (opened from the Artifacts header CTA). A drag-and-
- * drop zone (with a blue drag-over state) plus a hidden file input; added files
- * appear under "Uploaded Artifacts" and are committed to the shared saved-
- * artifacts state on Save. UI-only for now — no real upload.
+ * "Artifact" upload dialog (opened from the Artifacts header CTA). Supports
+ * multiple files: each selected/dropped file uploads to Workfront (attached to
+ * the project) and appears under "Uploaded Artifacts"; the ✕ deletes it from
+ * Workfront. While a delete is in flight ALL other CTAs are disabled, and
+ * "Generate Pre-read" only enables once every upload/delete has settled.
  */
-function ArtifactDialog({ savedArtifacts = [], onSave, onCancel }) {
-  const [files, setFiles] = useState(savedArtifacts);
+function ArtifactDialog({ onGenerate, onCancel }) {
+  const [files, setFiles] = useState([]);
   const [dragOver, setDragOver] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const inputRef = useRef(null);
+  const ctxRef = useRef(null);
+
+  // Read the Workfront context (project id, host, IMS token) for the actions.
+  useEffect(() => {
+    getImsAuth().then((a) => {
+      ctxRef.current = a;
+    });
+  }, []);
+
+  const patch = (id, changes) =>
+    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...changes } : f)));
+
+  const uploadOne = async (localId, file) => {
+    const ctx = ctxRef.current || (await getImsAuth());
+    ctxRef.current = ctx;
+    try {
+      const doc = await uploadArtifact({
+        projectId: ctx.projectId,
+        hostname: ctx.hostname,
+        imsToken: ctx.imsToken,
+        imsOrg: ctx.imsOrg,
+        file,
+      });
+      patch(localId, { status: 'ready', documentId: doc.id });
+    } catch (e) {
+      patch(localId, { status: 'error', error: e.message });
+    }
+  };
 
   const addFiles = (fileList) => {
-    const added = Array.from(fileList || []).map((f) => ({ id: nextUid(), name: f.name, size: f.size }));
-    if (added.length) setFiles((prev) => [...prev, ...added]);
+    const list = Array.from(fileList || []);
+    list.forEach((file) => {
+      const localId = nextUid();
+      setFiles((prev) => [...prev, { id: localId, name: file.name, size: file.size, status: 'uploading' }]);
+      uploadOne(localId, file);
+    });
   };
+
+  const removeFile = async (f) => {
+    if (!f.documentId) {
+      // Never persisted (still uploading / failed) — drop locally.
+      setFiles((prev) => prev.filter((x) => x.id !== f.id));
+      return;
+    }
+    const ctx = ctxRef.current || (await getImsAuth());
+    ctxRef.current = ctx;
+    setDeletingId(f.id);
+    try {
+      await deleteArtifact({
+        documentId: f.documentId,
+        hostname: ctx.hostname,
+        imsToken: ctx.imsToken,
+        imsOrg: ctx.imsOrg,
+      });
+      setFiles((prev) => prev.filter((x) => x.id !== f.id));
+    } catch (e) {
+      patch(f.id, { error: e.message });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const anyUploading = files.some((f) => f.status === 'uploading');
+  const deleting = deletingId != null;
+  const busy = anyUploading || deleting;
+  const readyCount = files.filter((f) => f.status === 'ready').length;
+  const canGenerate = !busy && readyCount > 0;
 
   return (
     <CustomDialog size="M" isDismissible padding="none">
-      {/* Dialog renders in a portal outside .es-dashboard, so re-apply the sans
-          (Adobe Clean) font here. */}
+      {/* Portal renders outside .es-dashboard — re-apply the sans font. */}
       <div className={`es-artifact ${dashboardBase}`}>
         <div className="es-artifact__close">
-          <CloseButton />
+          <CloseButton isDisabled={deleting} />
         </div>
         <h2 className={`es-artifact__title ${dialogTitle}`}>{LABELS.artifact.title}</h2>
         <p className={`es-artifact__desc ${dialogDesc}`}>{LABELS.artifact.description}</p>
@@ -96,13 +131,13 @@ function ArtifactDialog({ savedArtifacts = [], onSave, onCancel }) {
           className={dragOver ? 'es-dropzone es-dropzone--over' : 'es-dropzone'}
           onDragOver={(e) => {
             e.preventDefault();
-            setDragOver(true);
+            if (!deleting) setDragOver(true);
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => {
             e.preventDefault();
             setDragOver(false);
-            addFiles(e.dataTransfer.files);
+            if (!deleting) addFiles(e.dataTransfer.files);
           }}
         >
           <DropFileIcon />
@@ -111,6 +146,7 @@ function ArtifactDialog({ savedArtifacts = [], onSave, onCancel }) {
           <Button
             variant="primary"
             fillStyle="fill"
+            isDisabled={deleting}
             onPress={() => inputRef.current && inputRef.current.click()}
           >
             {LABELS.artifact.browse}
@@ -118,8 +154,12 @@ function ArtifactDialog({ savedArtifacts = [], onSave, onCancel }) {
           <input
             ref={inputRef}
             type="file"
+            multiple
             className="es-dropzone__input"
-            onChange={(e) => addFiles(e.target.files)}
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = '';
+            }}
           />
         </div>
 
@@ -131,26 +171,42 @@ function ArtifactDialog({ savedArtifacts = [], onSave, onCancel }) {
                 <FileText aria-hidden="true" />
                 <div className="es-artifact__file-meta">
                   <div className={bodyText}>{f.name}</div>
-                  <div className={detailText}>{formatSize(f.size)}</div>
+                  <div className={f.status === 'error' ? 'es-artifact__file-error' : detailText}>
+                    {f.status === 'uploading'
+                      ? LABELS.artifact.uploading
+                      : f.status === 'error'
+                        ? f.error || LABELS.artifact.uploadFailed
+                        : `${formatSize(f.size)}, ${LABELS.artifact.uploadedToday}`}
+                  </div>
                 </div>
-                <ActionButton
-                  isQuiet
-                  aria-label={`Remove ${f.name}`}
-                  onPress={() => setFiles((prev) => prev.filter((x) => x.id !== f.id))}
-                >
-                  <Close />
-                </ActionButton>
+                {f.status === 'uploading' ? (
+                  <ProgressCircle size="S" isIndeterminate aria-label="Uploading" />
+                ) : (
+                  <ActionButton
+                    isQuiet
+                    aria-label={`Remove ${f.name}`}
+                    isDisabled={deleting}
+                    onPress={() => removeFile(f)}
+                  >
+                    {deletingId === f.id ? <ProgressCircle size="S" isIndeterminate aria-label="Deleting" /> : <Close />}
+                  </ActionButton>
+                )}
               </div>
             ))}
           </div>
         )}
 
         <div className="es-artifact__footer">
-          <Button variant="secondary" fillStyle="outline" onPress={onCancel}>
+          <Button variant="secondary" fillStyle="outline" isDisabled={deleting} onPress={onCancel}>
             {LABELS.artifact.cancel}
           </Button>
-          <Button variant="primary" fillStyle="fill" onPress={() => onSave && onSave(files)}>
-            {LABELS.artifact.save}
+          <Button
+            variant="primary"
+            fillStyle="fill"
+            isDisabled={!canGenerate}
+            onPress={() => onGenerate && onGenerate(files.filter((f) => f.status === 'ready'))}
+          >
+            {LABELS.artifact.generatePreRead}
           </Button>
         </div>
       </div>

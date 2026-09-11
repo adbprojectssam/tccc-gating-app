@@ -24,13 +24,15 @@ export async function getImsAuth() {
     const context = conn && conn.sharedContext;
     const auth = context ? await context.get('auth') : null;
     const projectId = context ? await context.get('objID') : null;
+    const hostname = context ? await context.get('hostname') : null;
     return {
       imsToken: (auth && (auth.imsToken || auth.token)) || null,
       imsOrg: (auth && (auth.imsOrg || auth.imsOrgId || auth.imsOrgID || auth.orgId)) || null,
       projectId: projectId || null,
+      hostname: hostname || null,
     };
   } catch (error) {
-    return { imsToken: null, imsOrg: null, projectId: null };
+    return { imsToken: null, imsOrg: null, projectId: null, hostname: null };
   }
 }
 

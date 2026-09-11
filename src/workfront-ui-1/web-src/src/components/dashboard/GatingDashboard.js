@@ -67,9 +67,13 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
     if (onAction) onAction(id);
   };
 
-  const handleSaveArtifact = (files) => {
-    setSavedArtifacts(files);
+  const handleGeneratePreRead = (readyFiles) => {
+    // Phase 1: files are uploaded to Workfront. Record them and close; the
+    // generation progress + field-review flow (Phase 2) continues from here.
+    setSavedArtifacts(readyFiles.map((f) => ({ id: f.documentId, name: f.name, size: f.size })));
     setArtifactOpen(false);
+    // eslint-disable-next-line no-console
+    console.info('[artifact] generate pre-read for documents:', readyFiles.map((f) => f.documentId));
   };
 
   const handleGenerate = () => {
@@ -121,8 +125,7 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
       <DialogContainer onDismiss={() => setArtifactOpen(false)}>
         {isArtifactOpen && (
           <ArtifactDialog
-            savedArtifacts={savedArtifacts}
-            onSave={handleSaveArtifact}
+            onGenerate={handleGeneratePreRead}
             onCancel={() => setArtifactOpen(false)}
           />
         )}

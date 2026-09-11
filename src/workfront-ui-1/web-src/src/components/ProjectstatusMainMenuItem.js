@@ -78,6 +78,10 @@ const ProjectstatusMainMenuItem = () => {
       <GatingAssistant
         open={assistantOpen}
         maximized={assistantMax}
+        // undefined while loading / on error (no project) → priming waits and
+        // the launcher stays hidden; a loaded project yields its portfolioId
+        // (string or null) which drives the event/non-event priming prompt.
+        portfolioId={state.project ? (state.project.portfolioId ?? null) : undefined}
         subtitle={state.project && state.project.header && state.project.header.title}
         onOpen={() => setAssistantOpen(true)}
         onClose={() => {

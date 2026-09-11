@@ -115,6 +115,10 @@ export const LABELS = {
     uploaded: 'Uploaded Artifacts',
     cancel: 'Cancel',
     save: 'Save Artifact',
+    generatePreRead: 'Generate Pre-read',
+    uploadedToday: 'Uploaded today',
+    uploading: 'Uploading…',
+    uploadFailed: 'Upload failed',
   },
 
   // Pre-read generation dialog (opened from the "Pre-read" header CTA).

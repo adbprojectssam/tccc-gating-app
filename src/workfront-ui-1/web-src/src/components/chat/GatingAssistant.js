@@ -5,8 +5,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { style } from '@react-spectrum/s2/style' with { type: 'macro' };
 import { ActionButton, TextArea } from '@react-spectrum/s2';
-import Send from '@react-spectrum/s2/icons/Send';
-import Add from '@react-spectrum/s2/icons/Add';
 import Close from '@react-spectrum/s2/icons/Close';
 import Maximize from '@react-spectrum/s2/icons/Maximize';
 import Minimize from '@react-spectrum/s2/icons/Minimize';
@@ -22,15 +20,40 @@ import './gatingAssistant.css';
 // TextArea fills the input box; the +/send actions sit in a row beneath it.
 const inputFieldStyle = style({ width: 'full' });
 
+// Projects in this Workfront portfolio are "event type"; any other portfolio is
+// "non-event type". The classification is primed into the chat context so the
+// assistant scopes its answers correctly.
+const EVENT_PORTFOLIO_ID = '61fdad0600034b691cf17a0c7147ab61';
+
 let idCounter = 0;
 const nextId = () => `g${(idCounter += 1)}`;
 
-/** Sparkle glyph for the header avatar. */
+/** Sparkle glyph for the header avatar (white on the dark header — no box). */
 function SparkleIcon() {
   return (
-    <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 20 20" width="22" height="22" fill="currentColor" aria-hidden="true">
       <path d="M11.2 1.6c.22 3.2 1.4 4.38 4.6 4.6-3.2.22-4.38 1.4-4.6 4.6-.22-3.2-1.4-4.38-4.6-4.6 3.2-.22 4.38-1.4 4.6-4.6z" />
       <path d="M5.6 11.2c.14 1.86.86 2.58 2.72 2.72-1.86.14-2.58.86-2.72 2.72-.14-1.86-.86-2.58-2.72-2.72 1.86-.14 2.58-.86 2.72-2.72z" />
+    </svg>
+  );
+}
+
+/** Launcher sparkle (round dark toggle button) — matches the prototype's
+ *  .ai-btn glyph: a large 4-point star plus a smaller faded one. */
+function LauncherSparkle() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3l1.8 5.4L19 12l-5.2 3.6L12 21l-1.8-5.4L5 12l5.2-3.6L12 3z" fill="#fff" />
+      <path d="M19.5 4l.8 2.4 1.8 1.1-1.8 1.1L19.5 11l-.8-2.4-1.8-1.1 1.8-1.1L19.5 4z" fill="#fff" opacity=".55" />
+    </svg>
+  );
+}
+
+/** Filled paper-plane send glyph (matches the Figma send button). */
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M2.3 10.9 20 3.3c.72-.3 1.42.4 1.11 1.11L13.5 22c-.3.72-1.32.62-1.5-.12l-1.77-6a1 1 0 0 0-.7-.7l-6-1.77c-.74-.18-.84-1.2-.12-1.5Z" />
     </svg>
   );
 }
@@ -62,10 +85,13 @@ function splitSuggestions(content) {
  * 350px to 500px. Streams from the agent API (shared with the legacy
  * ChatWidget's clients); the response markdown drives the panel content.
  */
-function GatingAssistant({ open, maximized, subtitle, onOpen, onClose, onToggleMaximize }) {
+function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClose, onToggleMaximize }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  // Priming (project id + event/non-event classification) runs before the
+  // launcher is shown; `ready` flips true once that priming call completes.
+  const [ready, setReady] = useState(false);
   const authRef = useRef(null);
   const primedRef = useRef(false);
   const primePromiseRef = useRef(null);
@@ -74,29 +100,44 @@ function GatingAssistant({ open, maximized, subtitle, onOpen, onClose, onToggleM
   const stickToBottomRef = useRef(true);
   const lastMsgRef = useRef(null);
 
-  // Prime the agent with the current project id (invisible), capturing the
-  // conversation contextId so later prompts continue the same thread.
+  // Once the project has loaded (get-project completed), show the launcher
+  // right away and prime the conversation in the background: send the project id
+  // (invisible), then classify the project as event / non-event by its
+  // portfolio. Both messages thread the same contextId so later prompts inherit
+  // the context (user prompts await primePromiseRef, so they still wait for it).
   useEffect(() => {
-    let active = true;
-    getImsAuth().then((a) => {
-      if (!active) return;
-      authRef.current = a;
-      if (!primedRef.current && a.imsToken && a.projectId) {
-        primedRef.current = true;
-        primePromiseRef.current = streamChat({
-          prompt: `project id ${a.projectId}`,
-          imsToken: a.imsToken,
-        })
-          .then((res) => {
-            if (res && res.contextId) contextIdRef.current = res.contextId;
-          })
-          .catch(() => {});
+    if (primedRef.current) return;
+    // `undefined` means the project hasn't loaded (or failed) — wait; a string
+    // or `null` portfolioId means get-project completed and we can prime.
+    if (portfolioId === undefined) return;
+    primedRef.current = true;
+    // get-project is done — reveal the chat icon immediately.
+    setReady(true);
+    primePromiseRef.current = (async () => {
+      const auth = await getImsAuth();
+      authRef.current = auth;
+      if (!auth || !auth.imsToken) return; // no session (e.g. local dev)
+      try {
+        if (auth.projectId) {
+          const r1 = await streamChat({
+            prompt: `project id ${auth.projectId}`,
+            imsToken: auth.imsToken,
+          });
+          if (r1 && r1.contextId) contextIdRef.current = r1.contextId;
+        }
+        // Classify using the first prime's contextId (kept canonical — we don't
+        // overwrite it with this call's result).
+        const isEvent = portfolioId === EVENT_PORTFOLIO_ID;
+        await streamChat({
+          prompt: isEvent ? 'the project is an event type' : 'the project is non-event type',
+          imsToken: auth.imsToken,
+          conversationId: contextIdRef.current || undefined,
+        });
+      } catch (e) {
+        /* priming is best-effort */
       }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+    })();
+  }, [portfolioId]);
 
   // Track whether the user is near the bottom of the scroll body.
   useEffect(() => {
@@ -222,10 +263,12 @@ function GatingAssistant({ open, maximized, subtitle, onOpen, onClose, onToggleM
   const lastId = messages.length > 0 ? messages[messages.length - 1].id : null;
 
   if (!open) {
+    // Keep the launcher hidden until get-project has completed (see the priming
+    // effect); user prompts still await priming to thread the primed context.
+    if (!ready) return null;
     return (
       <button type="button" className="es-ga__launcher" aria-label="Open Gating Assistant" onClick={onOpen}>
-        <SparkleIcon />
-        <span>Gating Assistant</span>
+        <LauncherSparkle />
       </button>
     );
   }
@@ -286,9 +329,6 @@ function GatingAssistant({ open, maximized, subtitle, onOpen, onClose, onToggleM
             styles={inputFieldStyle}
           />
           <div className="es-ga__input-actions">
-            <button type="button" className="es-ga__attach" aria-label="Add attachment">
-              <Add />
-            </button>
             <button
               type="button"
               className="es-ga__send"
@@ -296,7 +336,7 @@ function GatingAssistant({ open, maximized, subtitle, onOpen, onClose, onToggleM
               disabled={busy || !input.trim()}
               onClick={() => handleSubmit(input)}
             >
-              <Send />
+              <SendIcon />
             </button>
           </div>
         </div>

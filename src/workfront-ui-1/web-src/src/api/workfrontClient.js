@@ -33,6 +33,7 @@ export const PROJECT_FIELDS = [
   'DE:Secondary Package Type',
   'DE:markets_selected',
   'DE:Target In-Market Date',
+  'portfolioID'
 ];
 
 /**

@@ -122,6 +122,7 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
           const r1 = await streamChat({
             prompt: `project id ${auth.projectId}`,
             imsToken: auth.imsToken,
+            imsOrg: auth.imsOrg,
           });
           if (r1 && r1.contextId) contextIdRef.current = r1.contextId;
         }
@@ -131,6 +132,7 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
         await streamChat({
           prompt: isEvent ? 'the project is an event type' : 'the project is non-event type',
           imsToken: auth.imsToken,
+          imsOrg: auth.imsOrg,
           conversationId: contextIdRef.current || undefined,
         });
       } catch (e) {
@@ -185,6 +187,7 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
       const result = await streamChat({
         prompt,
         imsToken: auth.imsToken,
+        imsOrg: auth.imsOrg,
         conversationId: contextIdRef.current || undefined,
         onToken: (t) =>
           setMessages((m) => m.map((x) => (x.id === botId ? { ...x, content: x.content + t } : x))),

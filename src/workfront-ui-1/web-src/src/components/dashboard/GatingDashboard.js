@@ -10,6 +10,7 @@ import NeedAttentionDialog from './NeedAttentionDialog';
 import ArtifactDialog from './ArtifactDialog';
 import PreReadDialog from './PreReadDialog';
 import FieldReviewDialog from './FieldReviewDialog';
+import NewProjectView from './NewProjectView';
 import KeyMetrics from './KeyMetrics';
 import GatePipeline from './GatePipeline';
 import GateDetailCard from './GateDetailCard';
@@ -47,6 +48,9 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
   const [preRead, setPreRead] = useState(null);
   // Document ids sent to the field-extraction API when the field-review opens.
   const [reviewDocumentIds, setReviewDocumentIds] = useState([]);
+  // Set once a pre-read is confirmed & shared — flips the Gate 1 sub-label in
+  // the new-project onboarding view to "Pre-read submitted".
+  const [preReadSubmitted, setPreReadSubmitted] = useState(false);
 
   if (!project) return null;
 
@@ -91,6 +95,7 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
     // back to Workfront is a later phase — record and close for now.
     // eslint-disable-next-line no-console
     console.info('[fieldreview] confirm & share pre-read:', finalValues);
+    setPreReadSubmitted(true);
     setFieldReviewOpen(false);
   };
 
@@ -114,29 +119,39 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
     });
   };
 
+  const isNew = !!project.isNew;
+  // The onboarding header drops the "Need Attention" CTA (Figma new-project state).
+  const header = isNew
+    ? { ...project.header, actions: (project.header.actions || []).filter((a) => a.id !== 'need-attention') }
+    : project.header;
+
   return (
     <div className={`es-dashboard ${dashboardBase}`}>
-      <ProjectHeader header={project.header} onAction={handleAction} />
+      <ProjectHeader header={header} onAction={handleAction} />
 
-      <div className="es-exec">
-        <KeyMetrics data={gate.keyMetrics} />
-        <div className="es-body">
-          <GatePipeline
-            data={pipeline}
-            selectedKey={selectedGate}
-            onGateSelect={handleGateSelect}
-          />
-          <div className="es-body__main">
-            <GateDetailCard gate={gate.gateDetail} />
-            <AIRecommendation data={gate.aiRecommendation} />
-            <BeyondTheSummary data={gate.beyondSummary} />
-            <IOFields data={gate.ioFields} />
-            <KeyKPIs data={gate.keyKpis} />
-            <ApprovalTable data={gate.approval} />
-            <GateReadiness data={gate.gateReadiness} />
+      {isNew ? (
+        <NewProjectView onUpload={() => handleAction('artifacts')} preReadSubmitted={preReadSubmitted} />
+      ) : (
+        <div className="es-exec">
+          <KeyMetrics data={gate.keyMetrics} />
+          <div className="es-body">
+            <GatePipeline
+              data={pipeline}
+              selectedKey={selectedGate}
+              onGateSelect={handleGateSelect}
+            />
+            <div className="es-body__main">
+              <GateDetailCard gate={gate.gateDetail} />
+              <AIRecommendation data={gate.aiRecommendation} />
+              <BeyondTheSummary data={gate.beyondSummary} />
+              <IOFields data={gate.ioFields} />
+              <KeyKPIs data={gate.keyKpis} />
+              <ApprovalTable data={gate.approval} />
+              <GateReadiness data={gate.gateReadiness} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <DialogContainer onDismiss={() => setAttentionOpen(false)}>
         {isAttentionOpen && (

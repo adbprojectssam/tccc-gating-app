@@ -160,6 +160,25 @@ export const LABELS = {
     confirmShare: 'Confirm & Share Pre-read',
   },
 
+  // New-project onboarding dashboard (shown before the gating process starts).
+  onboarding: {
+    badge: 'Action Required',
+    heading: 'This is a new project — start with the pre-read workflow',
+    body:
+      'Upload your pre-reads to kick off the gating process. Pre-reads help stakeholders review and align on important project details before the official Gate 1 review meeting.',
+    uploadArtifacts: 'Upload Artifacts',
+    learnMore: 'Learn about the gating process',
+    learnMoreHref: '#',
+    dropTitle: 'No documents uploaded yet',
+    dropSubtitle: 'PDF, PPTX, or DOCX up to 50MB',
+    ioTitle: 'IO Submitted Fields - Business Case',
+    ioLocked:
+      'Locked - No business case fields submitted yet. Fields will populate automatically from Workfront once you kick off the gating process.',
+    approvalNotInitialized:
+      'Approval workflow is not initialized. Submit your pre-reads to generate the stakeholder review trail.',
+    gate1PreRead: 'Pre-read submitted',
+  },
+
   // Tag prefixes — the static label part of "OU: Latin America" etc.
   tags: {
     ou: 'OU',

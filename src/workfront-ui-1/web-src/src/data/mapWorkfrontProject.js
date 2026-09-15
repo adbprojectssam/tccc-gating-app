@@ -341,10 +341,21 @@ export function mapWorkfrontProject(raw) {
     currentKey = '1';
   }
 
+  // "New project" = the gating process hasn't kicked off yet: no gate is
+  // completed or in progress (all still NEW / not started). Drives the
+  // onboarding dashboard (see NewProjectView). NOTE: adjust the "started" test
+  // here if Workfront reports gate task statuses with different codes.
+  const isNew = !rawGates.some(
+    (g) => g.completed || (g.status && String(g.status).toUpperCase() !== 'NEW'),
+  );
+
   return {
     // Workfront portfolio the project belongs to — used to prime the Gating
     // Assistant with the project's event/non-event classification.
     portfolioId: raw.portfolioID || null,
+
+    // True when the project is freshly created (see above) → onboarding view.
+    isNew,
 
     header: { title: raw.name || '', subtitle, actions: HEADER_ACTIONS },
 

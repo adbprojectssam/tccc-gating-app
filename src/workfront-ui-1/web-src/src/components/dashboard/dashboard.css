@@ -737,28 +737,35 @@
   margin: 0 0 4px;
   line-height: 1.4;
 }
+.es-artifact__generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 0;
+}
 
 /* Dialogs render in a portal outside .es-dashboard, so the --es-* tokens don't
    resolve here — mirror the resolved hex values (same as the token block). */
 .es-dropzone {
   border: 1px dashed #dadada;
   border-radius: 10px;
-  padding: 40px 24px;
+  height: 327px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 16px;
   text-align: center;
 }
 .es-dropzone svg {
-  margin-bottom: 10px;
   color: #131313;
 }
 .es-dropzone__title {
-  margin: 0;
+  margin: 0 0 4px;
 }
 .es-dropzone__subtitle {
-  margin: 0 0 6px;
+  margin: 0;
 }
 .es-dropzone--over {
   border-style: solid;
@@ -789,16 +796,24 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #dadada;
 }
-.es-artifact__file > svg,
-.es-preread__file > svg {
-  width: 24px;
-  height: 28px;
+.es-artifact__file:last-child {
+  border-bottom: none;
+}
+.es-artifact__file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #e9e9e9;
+  color: #1f1f1f;
   flex: none;
-  --iconPrimary: #717171;
 }
-.es-artifact__file-meta,
-.es-preread__file-meta {
+.es-artifact__file-meta {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -809,189 +824,120 @@
   font-size: 12px;
   color: #d73220;
 }
-.es-artifact__footer,
-.es-preread__footer,
-.es-fieldreview__footer {
+.es-artifact__footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
 }
 
-/* ---------- Pre-read dialog ---------- */
-.es-preread {
-  position: relative;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.es-preread__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.es-preread__title {
-  margin: 0;
-  padding-right: 24px;
-}
-.es-preread__desc {
-  margin: 0;
-  line-height: 1.4;
-}
-.es-preread__notice {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-  border-radius: 8px;
-  background: #fdf0e2;
-}
-.es-preread__notice-text {
-  line-height: 1.45;
-}
-.es-preread__notice > svg {
-  flex: none;
-  --iconPrimary: #d45b00;
-}
-.es-preread__source {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.es-preread__source-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.es-preread__source-head > svg {
-  flex: none;
-  --iconPrimary: #079355;
-}
-.es-preread__file {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.es-preread__generated {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  color: #079355;
-}
-.es-preread__generated > svg {
-  width: 14px;
-  height: 14px;
-  flex: none;
-  --iconPrimary: #079355;
-}
-
-/* ---------- Field review dialog ---------- */
-.es-fieldreview {
-  position: relative;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.es-fieldreview__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.es-fieldreview__title {
-  margin: 0;
-  padding-right: 24px;
-}
-.es-fieldreview__desc {
-  margin: 0;
-  line-height: 1.4;
-}
-.es-fieldreview__center {
+/* ---------- Gate 1 readiness card (inline, not a dialog) ---------- */
+.es-gate1__center {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 28px 0;
 }
-.es-fieldreview__notice {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
+
+/* Disabled-looking "No versions yet" chip — no versioning feature exists yet,
+   so this is inert chrome rather than a functional Picker. Shared by the card
+   header and the pre-read side panel header. */
+.es-gate1__version {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px 0 12px;
   border-radius: 8px;
-  background: #fdecea;
+  background: #e9e9e9;
+  color: #c6c6c6;
+  font-size: 14px;
+  white-space: nowrap;
 }
-.es-fieldreview__notice > svg {
-  flex: none;
-  --iconPrimary: #d73220;
+.es-gate1__version svg {
+  --iconPrimary: #c6c6c6;
 }
-.es-fieldreview__subtitle {
+
+.es-gate1__divider {
+  width: 100%;
+  height: 0;
   margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #f03823;
-  line-height: 1.35;
+  border: none;
+  border-top: 1px solid #e1e1e1;
 }
-.es-fieldreview__empty {
-  padding: 8px 0;
-}
-.es-fieldreview__list {
+
+.es-gate1__toolbar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
+  margin: 16px 0;
+}
+.es-gate1__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.es-gate1__spacer {
+  flex: 1 1 auto;
+}
+.es-gate1__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Tab label colors (Figma: green/orange/red per bucket) — no 'notice'/'positive'
+   key exists in S2's color (text) scale, so set via plain CSS same as the
+   rest of this file (see styles.js for the equivalent macro-side note). */
+.es-gate1__tab--high {
+  color: #079355;
+}
+.es-gate1__tab--low {
+  color: #d45b00;
+}
+.es-gate1__tab--conflict {
+  color: #f03823;
+}
+/* Neutral (not red) — Conflicts owns the "negative" red now. */
+.es-gate1__tab--missing {
+  color: #8f8f8f;
+}
+
+.es-gate1__panel {
+  margin-top: 16px;
   max-height: 46vh;
   overflow-y: auto;
 }
 
-/* Field cards — valid (green) vs needs-review (red). */
-.es-fieldreview__card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-  border-radius: 12px;
+/* Field cards are Spectrum InlineAlert (variant=positive/notice/negative); only
+   the border color is pinned to neutral gray here to match the Figma cards,
+   which don't tint the border per bucket — only the icon/heading are colored. */
+.es-gate1__panel [role='alert'] {
+  border-color: #dadada !important;
 }
-.es-fieldreview__card--valid {
-  background: #d7f7e1;
+
+/* Resolved low/conflict/missing cards: rendered with variant="positive" to
+   reuse its checkmark icon, then recolored per bucket instead of green so the
+   checkmark still reads as "this tab's" rather than "high confidence". */
+.es-gate1__resolved--low svg {
+  --iconPrimary: #d45b00 !important;
 }
-.es-fieldreview__card--review {
-  background: #ffebe8;
+.es-gate1__resolved--conflict svg {
+  --iconPrimary: #f03823 !important;
 }
-.es-fieldreview__card-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1 1 auto;
-  min-width: 0;
+.es-gate1__resolved--missing svg {
+  --iconPrimary: #8f8f8f !important;
 }
-.es-fieldreview__card-title {
-  margin: 0;
+
+/* Unresolved Missing Data cards default to variant="negative" (red alert
+   triangle) for the auto-icon — override to match the tab's neutral gray. */
+.es-gate1__missing-icon svg {
+  --iconPrimary: #8f8f8f !important;
 }
-.es-fieldreview__card-value,
-.es-fieldreview__card-hint {
-  margin: 0;
-  line-height: 1.45;
-  word-break: break-word;
-}
-.es-fieldreview__card-icon {
-  flex: none;
-}
-.es-fieldreview__card-icon svg {
-  width: 22px;
-  height: 22px;
-}
-.es-fieldreview__card-icon--ok svg {
-  --iconPrimary: #079355;
-}
-.es-fieldreview__card-icon--warn svg {
-  --iconPrimary: #f03823;
-}
-.es-fieldreview__enter {
+
+.es-gate1__enter {
+  display: inline-block;
   align-self: flex-start;
   margin-top: 4px;
   padding: 0;
@@ -1004,13 +950,13 @@
   color: #131313;
   text-decoration: underline;
 }
-.es-fieldreview__editor {
+.es-gate1__editor {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
 }
-.es-fieldreview__editor > :first-child {
+.es-gate1__editor > :first-child {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -1102,6 +1048,295 @@
 .es-lockcard__alert > svg {
   flex: none;
   --iconPrimary: #d47f00;
+}
+
+/* ---------- Gate 1 registration status card (replaces the onboarding banner
+   once the pre-read is confirmed) ---------- */
+.es-gate-registration {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+}
+.es-gate-registration__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.es-gate-registration__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.es-gate-registration__step > svg {
+  flex: none;
+  --iconPrimary: #079355;
+}
+.es-gate-registration__step-label {
+  color: #079355;
+}
+.es-gate-registration__heading {
+  margin: 0;
+}
+.es-gate-registration__body {
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+.es-gate-registration__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+.es-gate-registration__registered {
+  margin-top: 0;
+}
+.es-gate-registration__divider {
+  align-self: stretch;
+  width: 1px;
+  background: #e1e1e1;
+}
+.es-gate-registration__artifact {
+  flex: none;
+  width: 200px;
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  border: 1px dashed #dadada;
+  border-radius: 8px;
+  background: #f3f3f3;
+}
+.es-gate-registration__artifact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.es-gate-registration__artifact-item > svg {
+  flex: none;
+  --iconPrimary: #717171;
+}
+.es-gate-registration__artifact-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* ---------- "Choose a Gate 1 event" registration modal ---------- */
+.es-ges {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.es-ges__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.es-ges__title {
+  margin: 0;
+  padding-right: 24px;
+}
+.es-ges__subtitle {
+  margin: 0;
+  line-height: 1.4;
+}
+.es-ges__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+}
+.es-ges__notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fdf0e2;
+}
+.es-ges__notice > svg {
+  flex: none;
+  --iconPrimary: #d45b00;
+}
+.es-ges__empty,
+.es-ges__hint {
+  padding: 8px 0;
+}
+.es-ges__tabs {
+  display: flex;
+}
+.es-ges__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.es-ges__month {
+  font-size: 16px;
+  font-weight: 600;
+  color: #292929;
+}
+.es-ges__legend {
+  display: flex;
+  gap: 20px;
+}
+.es-ges__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #4b5563;
+}
+.es-ges__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.es-ges__dot--match {
+  background: #079355;
+}
+.es-ges__dot--none {
+  background: #9ca3af;
+}
+.es-ges__weekdays,
+.es-ges__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+.es-ges__weekday {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+}
+.es-ges__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.es-ges__cell {
+  height: 80px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+.es-ges__cell--blank {
+  visibility: hidden;
+}
+.es-ges__cell--eligible {
+  cursor: pointer;
+  border: 1.5px solid #079355;
+  background: #f0fdf4;
+}
+.es-ges__cell--selected {
+  border-width: 2px;
+  box-shadow: 0 0 0 1px #079355;
+}
+.es-ges__cell--event:not(.es-ges__cell--eligible) .es-ges__date,
+.es-ges__cell--event:not(.es-ges__cell--eligible) .es-ges__event-name {
+  color: #9ca3af;
+}
+.es-ges__date {
+  font-size: 12px;
+  color: #292929;
+}
+.es-ges__cell--eligible .es-ges__date {
+  font-weight: 600;
+}
+.es-ges__event {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+.es-ges__event-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #292929;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.es-ges__cell--event:not(.es-ges__cell--eligible) .es-ges__event-name {
+  font-weight: 400;
+  font-size: 10px;
+}
+.es-ges__more {
+  font-size: 10px;
+  color: #6b7280;
+}
+.es-ges__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.es-ges__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  color: #9ca3af;
+}
+.es-ges__row--eligible {
+  cursor: pointer;
+  color: #292929;
+}
+.es-ges__row--selected {
+  border: 1.5px solid #079355;
+  background: #f0fdf4;
+}
+.es-ges__row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.es-ges__row-date {
+  flex: none;
+  font-size: 12px;
+  color: #6b7280;
+}
+.es-ges__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 /* ---------- Misc ---------- */

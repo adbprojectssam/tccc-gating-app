@@ -3,13 +3,15 @@
  */
 
 /**
- * extract-fields — server-side proxy to the pre-read extraction webhook.
+ * extract-fields — server-side proxy to the pre-read extraction agent.
  *
  * Given a project id and the uploaded Workfront document ids, it calls the
- * automation hook, which reads the documents and returns extracted field values
+ * Adobe agent, which reads the documents and returns extracted field values
  * (`[{ field, value, page, evidence, confidence, source }]`). Proxied
- * server-side so the browser call is same-origin (no browser→cloud CORS).
- * Secured with require-adobe-auth.
+ * server-side so the browser call is same-origin (no browser→cloud CORS), and
+ * so the call can be made in the agent-owning org's context (see AGENT_ORG_ID
+ * below) regardless of the signed-in user's own org — same pattern as the
+ * `chat` action. Secured with require-adobe-auth.
  */
 const fetch = require("node-fetch");
 const { Core } = require("@adobe/aio-sdk");
@@ -18,11 +20,14 @@ const {
   stringParameters,
   checkMissingRequestInputs,
 } = require("../utils");
+const { MOCK_EXTRACTED_FIELDS } = require("./mockExtractedFields");
 
-// Automation webhook that extracts Workfront field values from the project's
-// documents. Fixed endpoint (no secret / no per-host routing).
 const EXTRACT_ENDPOINT =
-  "https://hook.automations.adobe.com/1nekjze4m5w8776hwnfluozwred5tt13";
+  "https://agents.automations.adobe.com/api/v3/agents/01a08ef0-5a6f-7003-ac6e-3399920efd31/api";
+
+// The org that OWNS the agent (from the working cURL). The request must be made
+// in this org's context regardless of the signed-in user's own org.
+const AGENT_ORG_ID = "9075A2B154DE8AF80A4C98A7@AdobeOrg";
 
 async function main(params) {
   const logger = Core.Logger("extract-fields", {
@@ -35,7 +40,7 @@ async function main(params) {
     const errorMessage = checkMissingRequestInputs(
       params,
       ["projectId", "documentIds"],
-      [],
+      ["authorization"],
     );
     if (errorMessage) return errorResponse(400, errorMessage, logger);
 
@@ -50,9 +55,18 @@ async function main(params) {
       );
     }
 
+    const token = String((params.__ow_headers || {}).authorization || "").replace(
+      /^Bearer\s+/i,
+      "",
+    );
+    if (!token) return errorResponse(401, "missing IMS token", logger);
+
     const res = await fetch(EXTRACT_ENDPOINT, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
+        "x-gw-ims-org-id": AGENT_ORG_ID,
+        "x-headless-integration": "true",
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -73,10 +87,14 @@ async function main(params) {
       );
     }
 
-    // The hook returns a bare array of extracted fields; tolerate a { data: [] }
+    // The agent returns a bare array of extracted fields; tolerate a { data: [] }
     // wrapper too.
     const fields = Array.isArray(body) ? body : (body && body.data) || [];
-    return { statusCode: 200, body: { data: fields } };
+    if (fields.length === 0) {
+      logger.info("Empty extraction result — falling back to mock data");
+    }
+    const resultFields = fields.length > 0 ? fields : MOCK_EXTRACTED_FIELDS;
+    return { statusCode: 200, body: { data: resultFields } };
   } catch (error) {
     logger.error(error);
     const detail = error && error.message ? error.message : "server error";

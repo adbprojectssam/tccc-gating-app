@@ -165,6 +165,19 @@ export function mapWorkfrontProject(raw) {
 
   const subtitle = [market, category, ownerName].filter(Boolean).join(' · ');
 
+  // The project's own "level" for Gate 1 registration eligibility — whichever of
+  // Category / Operating Unit / Country is set, checked in that priority order.
+  // Matches Workfront's "DE:What level is your Gate Meeting?" vocabulary (OU /
+  // Country / Category) on the gate-meeting search results, so no translation is
+  // needed when filtering eligible events against this.
+  const registrationLevel = category
+    ? { level: 'Category', value: category }
+    : operatingUnit
+      ? { level: 'OU', value: operatingUnit }
+      : market
+        ? { level: 'Country', value: market }
+        : null;
+
   // KPI cards. Volumes render in K notation with the "position in forecast
   // range" sparkline; GP Margin shows the Actual-vs-Benchmark bars. The API has
   // no forecast distribution or benchmark, so the sparkline uses a placeholder
@@ -311,6 +324,9 @@ export function mapWorkfrontProject(raw) {
 
     if (g.fetched) {
       gateData[g.number] = {
+        // Workfront Task object id for this gate — needed when submitting
+        // validated pre-read fields back against the right task.
+        id: g.id,
         keyMetrics: { title: LABELS.sections.keyMetrics, metrics },
         gateDetail: buildGateDetail(g),
         ioFields,
@@ -356,6 +372,14 @@ export function mapWorkfrontProject(raw) {
 
     // True when the project is freshly created (see above) → onboarding view.
     isNew,
+
+    // Project owner — shown as the "Gate 1 facilitator" who was notified once
+    // the pre-read is confirmed (see the gate-registration status card).
+    ownerName: ownerName || '',
+
+    // This project's Gate 1 registration level/value (see above) — used to
+    // filter/highlight eligible events in the "Choose a Gate 1 event" modal.
+    registrationLevel,
 
     header: { title: raw.name || '', subtitle, actions: HEADER_ACTIONS },
 

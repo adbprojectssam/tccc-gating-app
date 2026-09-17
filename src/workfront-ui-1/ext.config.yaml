@@ -50,8 +50,37 @@ runtimeManifest:
           annotations:
             require-adobe-auth: true
             final: true
+        submit-validated-fields:
+          function: actions/submit-validated-fields/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+          annotations:
+            require-adobe-auth: true
+            final: true
         chat:
           function: actions/chat/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+          annotations:
+            require-adobe-auth: true
+            final: true
+        get-gate-events:
+          function: actions/get-gate-events/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+            WORKFRONT_API_KEY: $WORKFRONT_API_KEY
+            WORKFRONT_ALLOWED_HOSTS: $WORKFRONT_ALLOWED_HOSTS
+          annotations:
+            require-adobe-auth: true
+            final: true
+        register-gate-event:
+          function: actions/register-gate-event/index.js
           web: 'yes'
           runtime: nodejs:18
           inputs:

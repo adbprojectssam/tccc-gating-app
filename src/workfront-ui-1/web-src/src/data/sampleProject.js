@@ -58,6 +58,7 @@ export const sampleProject = {
   gateData: {
     /* ------------------------------- GATE 1 ------------------------------- */
     1: {
+      id: '695c0f0c00edf116d48d59fbb4200ca9',
       keyMetrics: {
         title: LABELS.sections.keyMetrics,
         metrics: [
@@ -132,6 +133,7 @@ export const sampleProject = {
 
     /* ------------------------------- GATE 2 ------------------------------- */
     2: {
+      id: '695c0f0c00edf116d48d59fbb4200ca8',
       keyMetrics: {
         title: LABELS.sections.keyMetrics,
         metrics: [

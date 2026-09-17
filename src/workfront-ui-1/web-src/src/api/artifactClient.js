@@ -68,13 +68,34 @@ export async function extractFields({ projectId, documentIds, imsToken, imsOrg }
   const actionUrl = resolveUrl('extract-fields');
   if (!actionUrl) throw new Error('extract-fields action is not configured — build the app');
 
-  const result = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
+  const result = await actionWebInvoke(actionUrl, { ...authHeaders(imsToken, imsOrg), 'x-headless-integration': true }, {
     projectId,
     documentIds,
   });
   if (!result || result.error || !result.data) {
     const detail = (result && result.error && (result.error.error || result.error)) || 'unknown error';
     throw new Error(`Field extraction failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+  }
+  return result.data;
+}
+
+/**
+ * Submit the validated field list (high-confidence fields, plus anything the
+ * user confirmed/entered on the Pre-read Validation screen) for the given
+ * Workfront task, via the `submit-validated-fields` action. `fields` is
+ * `[{ field, value }]`. Throws on error.
+ */
+export async function submitValidatedFields({ fields, taskId, imsToken, imsOrg }) {
+  const actionUrl = resolveUrl('submit-validated-fields');
+  if (!actionUrl) throw new Error('submit-validated-fields action is not configured — build the app');
+
+  const result = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
+    fields,
+    taskId,
+  });
+  if (!result || result.error) {
+    const detail = (result && result.error && (result.error.error || result.error)) || 'unknown error';
+    throw new Error(`Field submission failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
   }
   return result.data;
 }

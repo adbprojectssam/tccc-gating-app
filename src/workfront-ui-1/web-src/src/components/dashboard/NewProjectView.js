@@ -7,6 +7,7 @@ import AlertDiamond from '@react-spectrum/s2/icons/AlertDiamond';
 import FileText from '@react-spectrum/s2/icons/FileText';
 import KeyMetrics from './KeyMetrics';
 import GatePipeline from './GatePipeline';
+import GateRegistrationStatusCard from './GateRegistrationStatusCard';
 import { LABELS } from '../../constants/labels';
 import { cardSurface, cardTitle, sectionTitle, bannerBody, bodyText, dialogDesc } from './styles';
 
@@ -50,12 +51,24 @@ const EMPTY_METRICS = {
 
 /**
  * New-project onboarding dashboard (Figma 1849-100981). Rendered instead of the
- * normal exec dashboard when `project.isNew` is true: empty KPI cards, a hero
- * banner prompting the pre-read upload, the fresh gate pipeline, and locked
- * IO-fields / approval-trail states. `onUpload` opens the Artifacts dialog;
- * `preReadSubmitted` flips the Gate 1 sub-label once a pre-read is shared.
+ * normal exec dashboard when `project.isNew` is true: empty KPI cards, the
+ * fresh gate pipeline, locked IO-fields / approval-trail states, and one of
+ * three hero states — upload prompt, the Gate 1 readiness card (`readinessCard`,
+ * built by the parent so it's a single implementation shared with the regular
+ * exec dashboard), or the "pre-read complete" status card. `onUpload` opens
+ * the Artifacts dialog; `preReadSubmitted` flips the Gate 1 sub-label once a
+ * pre-read is shared.
  */
-function NewProjectView({ onUpload, preReadSubmitted }) {
+function NewProjectView({
+  onUpload,
+  preReadSubmitted,
+  savedArtifacts = [],
+  ownerName,
+  registeredEvent,
+  onRegister,
+  onViewPreRead,
+  readinessCard,
+}) {
   const O = LABELS.onboarding;
 
   const pipeline = {
@@ -74,27 +87,39 @@ function NewProjectView({ onUpload, preReadSubmitted }) {
     <div className="es-exec">
       <KeyMetrics data={EMPTY_METRICS} />
 
-      <section className="es-onboard">
-        <div className="es-onboard__info">
-          <Badge variant="accent">{O.badge}</Badge>
-          <h2 className={`es-onboard__heading ${sectionTitle}`}>{O.heading}</h2>
-          <p className={`es-onboard__body ${dialogDesc}`}>{O.body}</p>
-          <div className="es-onboard__actions">
-            <Button variant="primary" fillStyle="fill" onPress={onUpload}>
-              <FileText />
-              <Text>{O.uploadArtifacts}</Text>
-            </Button>
-            <a className="es-onboard__learn" href={O.learnMoreHref}>
-              {O.learnMore} <span aria-hidden="true">→</span>
-            </a>
+      {preReadSubmitted ? (
+        <GateRegistrationStatusCard
+          facilitatorName={ownerName}
+          artifact={savedArtifacts[0]}
+          registeredEvent={registeredEvent}
+          onRegister={onRegister}
+          onViewPreRead={onViewPreRead}
+        />
+      ) : readinessCard ? (
+        readinessCard
+      ) : (
+        <section className="es-onboard">
+          <div className="es-onboard__info">
+            <Badge variant="accent">{O.badge}</Badge>
+            <h2 className={`es-onboard__heading ${sectionTitle}`}>{O.heading}</h2>
+            <p className={`es-onboard__body ${dialogDesc}`}>{O.body}</p>
+            <div className="es-onboard__actions">
+              <Button variant="primary" fillStyle="fill" onPress={onUpload}>
+                <FileText />
+                <Text>{O.uploadArtifacts}</Text>
+              </Button>
+              <a className="es-onboard__learn" href={O.learnMoreHref}>
+                {O.learnMore} <span aria-hidden="true">→</span>
+              </a>
+            </div>
           </div>
-        </div>
-        <div className="es-onboard__drop" aria-hidden="true">
-          <DropGlyph />
-          <div className={`es-onboard__drop-title ${bodyText}`}>{O.dropTitle}</div>
-          <div className={`es-onboard__drop-sub ${dialogDesc}`}>{O.dropSubtitle}</div>
-        </div>
-      </section>
+          <div className="es-onboard__drop" aria-hidden="true">
+            <DropGlyph />
+            <div className={`es-onboard__drop-title ${bodyText}`}>{O.dropTitle}</div>
+            <div className={`es-onboard__drop-sub ${dialogDesc}`}>{O.dropSubtitle}</div>
+          </div>
+        </section>
+      )}
 
       <div className="es-body">
         <GatePipeline data={pipeline} selectedKey={null} />

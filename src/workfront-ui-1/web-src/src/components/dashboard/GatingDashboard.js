@@ -8,8 +8,8 @@ import './dashboard.css';
 import ProjectHeader from './ProjectHeader';
 import NeedAttentionDialog from './NeedAttentionDialog';
 import ArtifactDialog from './ArtifactDialog';
-import PreReadDialog from './PreReadDialog';
-import FieldReviewDialog from './FieldReviewDialog';
+import PreReadSidePanel from './PreReadSidePanel';
+import GateEventSelectorDialog from './GateEventSelectorDialog';
 import NewProjectView from './NewProjectView';
 import KeyMetrics from './KeyMetrics';
 import GatePipeline from './GatePipeline';
@@ -20,7 +20,10 @@ import IOFields from './IOFields';
 import KeyKPIs from './KeyKPIs';
 import ApprovalTable from './ApprovalTable';
 import GateReadiness from './GateReadiness';
+import PreReadValidation from './PreReadValidation';
 import { dashboardBase } from './styles';
+import { getImsAuth } from '../../api/imsAuth';
+import { extractFields, submitValidatedFields } from '../../api/artifactClient';
 
 /**
  * Top-level composition of the gating dashboard.
@@ -40,17 +43,29 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
   // Bumped every time the Artifacts popup opens so it remounts fresh — the
   // previous session's uploaded-file list is cleared (see the `key` below).
   const [artifactSession, setArtifactSession] = useState(0);
-  const [isPreReadOpen, setPreReadOpen] = useState(false);
-  const [isFieldReviewOpen, setFieldReviewOpen] = useState(false);
-  // Shared across the two header dialogs: the saved source artifact(s) and, once
-  // generated, the pre-read metadata. UI-only session state for now.
+  const [isPreReadPanelOpen, setPreReadPanelOpen] = useState(false);
+  const [isUpdatePreReadOpen, setUpdatePreReadOpen] = useState(false);
+  // The saved source artifact(s) for this gate. UI-only session state for now.
   const [savedArtifacts, setSavedArtifacts] = useState([]);
-  const [preRead, setPreRead] = useState(null);
-  // Document ids sent to the field-extraction API when the field-review opens.
-  const [reviewDocumentIds, setReviewDocumentIds] = useState([]);
+  // The extraction result, once the Gate 1 readiness card has something to show.
+  const [fields, setFields] = useState([]);
+  // Drives the loading state inside whichever upload dialog (Artifacts /
+  // Update Pre-read) is open — the extract-fields call happens while it's
+  // still open, and only closes on success.
+  const [isExtracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState('');
+  // Drives the loading/error state on the Gate 1 readiness card's "Submit for
+  // Review" button while the submit-validated-fields call is in flight.
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   // Set once a pre-read is confirmed & shared — flips the Gate 1 sub-label in
-  // the new-project onboarding view to "Pre-read submitted".
+  // the new-project onboarding view to "Pre-read submitted", and swaps the
+  // onboarding hero for the "pre-read complete" status card (see below).
   const [preReadSubmitted, setPreReadSubmitted] = useState(false);
+  const [isRegisterOpen, setRegisterOpen] = useState(false);
+  // Set once the user successfully registers for a Gate 1 event — shown as a
+  // confirmation note on the status card.
+  const [registeredEvent, setRegisteredEvent] = useState(null);
 
   if (!project) return null;
 
@@ -70,53 +85,75 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
     if (id === 'artifacts') {
       // New session each open → the dialog remounts with an empty file list.
       setArtifactSession((n) => n + 1);
+      setExtractError('');
       setArtifactOpen(true);
       return;
     }
     if (id === 'pre-read') {
-      setPreReadOpen(true);
+      setPreReadPanelOpen(true);
       return;
     }
     if (onAction) onAction(id);
   };
 
-  const handleGeneratePreRead = (readyFiles) => {
-    // Files are uploaded to Workfront. Record them, then send their document ids
-    // to the extraction API by opening the field-review dialog.
+  // Calls the extract-fields action with the given project/document ids.
+  // Resolves to the field list — the action itself falls back to mock data on
+  // an empty extraction, so no fallback is needed here. Throws on error.
+  const runExtraction = async (documentIds) => {
+    const ctx = await getImsAuth();
+    const result = await extractFields({
+      projectId: ctx.projectId,
+      documentIds,
+      imsToken: ctx.imsToken,
+      imsOrg: ctx.imsOrg,
+    });
+    return Array.isArray(result) ? result : [];
+  };
+
+  // Shared by both the initial "Generate Pre-read" and "Update Pre-read" —
+  // the dialog (seeded with any existing artifacts for the latter) always
+  // hands back the full ready-file set, so this just records it and re-runs
+  // extraction over it. `onDone` closes whichever dialog called it.
+  const runReview = async (readyFiles, onDone) => {
     const ids = readyFiles.map((f) => f.documentId).filter(Boolean);
     setSavedArtifacts(readyFiles.map((f) => ({ id: f.documentId, name: f.name, size: f.size })));
-    setReviewDocumentIds(ids);
-    setArtifactOpen(false);
-    setFieldReviewOpen(true);
+    setExtracting(true);
+    setExtractError('');
+    try {
+      const list = await runExtraction(ids);
+      setFields(list);
+      onDone();
+    } catch (e) {
+      setExtractError(e.message);
+    } finally {
+      setExtracting(false);
+    }
   };
 
-  const handleConfirmFields = (finalValues) => {
-    // Extracted (and user-confirmed) field values. Sharing the pre-read / saving
-    // back to Workfront is a later phase — record and close for now.
-    // eslint-disable-next-line no-console
-    console.info('[fieldreview] confirm & share pre-read:', finalValues);
-    setPreReadSubmitted(true);
-    setFieldReviewOpen(false);
-  };
+  const handleGeneratePreRead = (readyFiles) => runReview(readyFiles, () => setArtifactOpen(false));
+  const handleUpdatePreRead = (readyFiles) => runReview(readyFiles, () => setUpdatePreReadOpen(false));
 
-  const handleSaveDraftFields = (draftValues) => {
-    // Partial (unshared) review — persisting the draft is a later phase.
-    // eslint-disable-next-line no-console
-    console.info('[fieldreview] saved draft:', draftValues);
-    setFieldReviewOpen(false);
-  };
-
-  const handleGenerate = () => {
-    setPreRead({
-      by: 'A1',
-      at: new Date().toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      }),
-    });
+  // "Submit for Review": sends the validated [{ field, value }] payload
+  // (high-confidence fields, plus anything the user confirmed/entered) to the
+  // submit-validated-fields action, against the currently selected gate's
+  // Workfront task id. Only flips to "submitted" once that call succeeds.
+  const handleSubmitForReview = async (validatedFields) => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const ctx = await getImsAuth();
+      await submitValidatedFields({
+        fields: validatedFields,
+        taskId: gate.id,
+        imsToken: ctx.imsToken,
+        imsOrg: ctx.imsOrg,
+      });
+      setPreReadSubmitted(true);
+    } catch (e) {
+      setSubmitError(e.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const isNew = !!project.isNew;
@@ -125,12 +162,41 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
     ? { ...project.header, actions: (project.header.actions || []).filter((a) => a.id !== 'need-attention') }
     : project.header;
 
+  // Built once, used wherever it's relevant: the new-project onboarding view
+  // and the regular exec dashboard both just render this (or not) — artifacts
+  // can be uploaded/reviewed for a gate at any point, not only for a brand new
+  // project. Null once the pre-read has been submitted or nothing's pending.
+  const readinessCard =
+    fields.length > 0 && !preReadSubmitted ? (
+      <PreReadValidation
+        fields={fields}
+        projectTitle={header.title}
+        onViewPreRead={() => setPreReadPanelOpen(true)}
+        onUpdatePreRead={() => {
+          setExtractError('');
+          setUpdatePreReadOpen(true);
+        }}
+        onSubmitForReview={handleSubmitForReview}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+      />
+    ) : null;
+
   return (
     <div className={`es-dashboard ${dashboardBase}`}>
       <ProjectHeader header={header} onAction={handleAction} />
 
       {isNew ? (
-        <NewProjectView onUpload={() => handleAction('artifacts')} preReadSubmitted={preReadSubmitted} />
+        <NewProjectView
+          onUpload={() => handleAction('artifacts')}
+          preReadSubmitted={preReadSubmitted}
+          savedArtifacts={savedArtifacts}
+          ownerName={project.ownerName}
+          registeredEvent={registeredEvent}
+          onRegister={() => setRegisterOpen(true)}
+          onViewPreRead={() => handleAction('pre-read')}
+          readinessCard={readinessCard}
+        />
       ) : (
         <div className="es-exec">
           <KeyMetrics data={gate.keyMetrics} />
@@ -141,13 +207,17 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
               onGateSelect={handleGateSelect}
             />
             <div className="es-body__main">
-              <GateDetailCard gate={gate.gateDetail} />
-              <AIRecommendation data={gate.aiRecommendation} />
-              <BeyondTheSummary data={gate.beyondSummary} />
-              <IOFields data={gate.ioFields} />
-              <KeyKPIs data={gate.keyKpis} />
-              <ApprovalTable data={gate.approval} />
-              <GateReadiness data={gate.gateReadiness} />
+              {readinessCard || (
+                <>
+                  <GateDetailCard gate={gate.gateDetail} />
+                  <AIRecommendation data={gate.aiRecommendation} />
+                  <BeyondTheSummary data={gate.beyondSummary} />
+                  <IOFields data={gate.ioFields} />
+                  <KeyKPIs data={gate.keyKpis} />
+                  <ApprovalTable data={gate.approval} />
+                  <GateReadiness data={gate.gateReadiness} />
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -168,34 +238,51 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
             key={artifactSession}
             onGenerate={handleGeneratePreRead}
             onCancel={() => setArtifactOpen(false)}
+            isGenerating={isExtracting}
+            generateError={extractError}
           />
         )}
       </DialogContainer>
 
-      <DialogContainer onDismiss={() => setFieldReviewOpen(false)}>
-        {isFieldReviewOpen && (
-          <FieldReviewDialog
-            documentIds={reviewDocumentIds}
-            onCancel={() => setFieldReviewOpen(false)}
-            onConfirm={handleConfirmFields}
-            onSaveDraft={handleSaveDraftFields}
+      <DialogContainer onDismiss={() => setUpdatePreReadOpen(false)}>
+        {isUpdatePreReadOpen && (
+          <ArtifactDialog
+            onGenerate={handleUpdatePreRead}
+            onCancel={() => setUpdatePreReadOpen(false)}
+            initialFiles={savedArtifacts}
+            isGenerating={isExtracting}
+            generateError={extractError}
           />
         )}
       </DialogContainer>
 
-      <DialogContainer onDismiss={() => setPreReadOpen(false)}>
-        {isPreReadOpen && (
-          <PreReadDialog
-            savedArtifacts={savedArtifacts}
-            preRead={preRead}
-            onCancel={() => setPreReadOpen(false)}
-            onGoToArtifact={() => {
-              setPreReadOpen(false);
-              setArtifactOpen(true);
-            }}
-            onGenerate={handleGenerate}
-            onDownload={() => {
-              /* stub: download the generated pre-read (no backend yet) */
+      <PreReadSidePanel
+        isOpen={isPreReadPanelOpen}
+        onClose={() => setPreReadPanelOpen(false)}
+        projectTitle={header.title}
+        fields={fields}
+        onGenerate={() => {
+          setPreReadPanelOpen(false);
+          handleAction('artifacts');
+        }}
+        onUpdatePreRead={() => {
+          setPreReadPanelOpen(false);
+          setExtractError('');
+          setUpdatePreReadOpen(true);
+        }}
+        onDownloadPdf={() => {
+          /* stub: download the generated pre-read (no backend yet) */
+        }}
+      />
+
+      <DialogContainer onDismiss={() => setRegisterOpen(false)}>
+        {isRegisterOpen && (
+          <GateEventSelectorDialog
+            registrationLevel={project.registrationLevel}
+            onCancel={() => setRegisterOpen(false)}
+            onRegistered={(event) => {
+              setRegisteredEvent(event);
+              setRegisterOpen(false);
             }}
           />
         )}

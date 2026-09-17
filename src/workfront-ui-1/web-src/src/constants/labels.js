@@ -48,6 +48,15 @@ export const LABELS = {
     incrementalVolume: 'Incremental Volume',
     gpMargin: 'GP Margin',
     capex: 'CAPEX',
+    launchMarket: 'Launch Market',
+  },
+
+  // DSFV snapshot labels (Desirability / Sellability / Feasibility / Viability).
+  dsfv: {
+    desirability: 'Desirability',
+    sellability: 'Sellability',
+    feasibility: 'Feasibility',
+    viability: 'Viability',
   },
 
   // KPI card footnotes (secondary labels under the metric).
@@ -108,56 +117,66 @@ export const LABELS = {
   artifact: {
     title: 'Artifact',
     description:
-      'Upload the source document for this gate. This is stored as-is - generate the Pre-read from it separately.',
+      `Upload the artifacts you have - a launch deck, budget, or strategy doc - and the pre-read will be extracted automatically. You don't need everything ready at once.`,
     dropTitle: 'Drag and drop your file',
     dropSubtitle: 'Or, select a file from your computer.',
     browse: 'Browse files',
     uploaded: 'Uploaded Artifacts',
     cancel: 'Cancel',
     save: 'Save Artifact',
-    generatePreRead: 'Generate Pre-read',
+    generatePreRead: 'Validate Data',
     uploadedToday: 'Uploaded today',
     uploading: 'Uploading…',
     uploadFailed: 'Upload failed',
   },
 
-  // Pre-read generation dialog (opened from the "Pre-read" header CTA).
-  preread: {
-    title: 'Pre-read',
-    description:
-      'Generates the pre-read Decision Makers will read ahead of the gate meeting, from the saved artifact.',
-    noArtifact:
-      'No artifact has been saved for this gate yet. Save one via Artifact before a Pre-read can be generated.',
-    generatingFrom: 'Generating from saved artifact:',
-    cancel: 'Cancel',
-    goToArtifact: 'Go to Artifact',
-    generate: 'Generate',
-    regenerate: 'Regenerate',
-    download: 'Download',
-  },
-
-  // Field-review dialog — shown after Generate Pre-read, listing the values the
-  // extraction API pulled from the uploaded document(s). Two states: "Need
-  // Attention" (some fields low-confidence/missing) and "Complete your Pre-read"
-  // (all fields valid).
+  // Gate 1 readiness card — shown inline after Generate Pre-read, listing the
+  // values the extraction API pulled from the uploaded document(s), split into
+  // High Confidence / Low Confidence / Conflicts / Missing Data tabs.
   fieldReview: {
-    needAttentionTitle: 'Need Attention',
-    completeTitle: 'Complete your Pre-read',
-    reviewSubtitle: '{count} fields need your review before this pre-read can be shared',
-    body:
-      'We pulled most fields directly from your document. A few were low-confidence or missing - confirm or fill these in, then share the pre-read with your Gate 1 facilitator.',
+    title: 'Gate 1 Pre-read Validation',
+    versionPlaceholder: 'Current Version',
+    progress: '{completed} of {total} fields complete',
+    viewPreRead: 'View pre-read',
+    updatePreRead: 'Update Pre-read',
+    submitForReview: 'Submit for Review',
+    tabHigh: 'High Confidence Data ({count})',
+    tabLow: 'Low Confidence Data ({count})',
+    tabConflict: 'Conflicts ({count})',
+    tabMissing: 'Missing Data ({count})',
     loading: 'Extracting field values…',
     error: 'We couldn’t extract field values. Please try again.',
     empty: 'No fields were returned for these documents.',
+    valueLine: 'Value: {value}.',
+    confidenceHint: 'Extracted at {percent}% confidence — please confirm.',
+    confirmValue: 'Confirm value',
     missingSuffix: ' - Missing',
-    missingHint: 'Not found in document. Enter the {label} value to continue.',
-    lowConfidenceHint: 'Low confidence - confirm or correct the extracted value.',
+    missingHint: 'Not found in either document.',
     enterValue: 'Enter Value',
-    valueLine: 'Value: {value}',
+    conflictHint: 'Conflicting values — Workfront {workfrontValue} vs. doc {value}.',
+    resolveConflict: 'Resolve conflict',
+    resolveAriaLabel: 'Resolve {label}',
+    conflictOptionWorkfront: 'Workfront: {value}',
+    conflictOptionDoc: 'Doc: {value}',
     save: 'Save',
-    saveDraft: 'Save Draft',
-    cancel: 'Cancel',
-    confirmShare: 'Confirm & Share Pre-read',
+    submitting: 'Submitting…',
+  },
+
+  // Pre-read side panel — opened from "View pre-read" on the Gate 1 readiness
+  // card. Read-only summary of the business case pulled from the source docs.
+  preReadPanel: {
+    title: 'Pre-read - Gate 1: Concept',
+    versionPlaceholder: 'No versions yet',
+    sharedNotice: 'Shared with {facilitator} (Gate 1 facilitator) · All fields confirmed.',
+    businessCaseSummary: 'Business Case Summary',
+    keyMetrics: 'Key Metrics',
+    dsfvSnapshot: 'DSFV Snapshot',
+    source: 'Source',
+    updatePreRead: 'Update Pre-read',
+    downloadPdf: 'Download Pdf',
+    close: 'Close',
+    emptyTitle: 'No pre-read generated',
+    emptyBody: "Your pre-read document will appear here once it's been generated.",
   },
 
   // New-project onboarding dashboard (shown before the gating process starts).
@@ -183,7 +202,38 @@ export const LABELS = {
   tags: {
     ou: 'OU',
     category: 'Category',
+    country: 'Country',
     lead: 'Lead',
+  },
+
+  // "Pre-read complete" status card (replaces the onboarding banner once the
+  // pre-read is confirmed) and the "Choose a Gate 1 event" registration modal.
+  gateRegistration: {
+    complete: 'Complete',
+    heading: 'Pre-read shared with your Gate 1 facilitator',
+    bodyWithFacilitator: 'All fields are confirmed. {facilitator} was notified and can review the pre-read ahead of the meeting. Next, register this project for an upcoming Gate 1 event.',
+    bodyGeneric: 'All fields are confirmed. Your Gate 1 facilitator was notified and can review the pre-read ahead of the meeting. Next, register this project for an upcoming Gate 1 event.',
+    registerButton: 'Register for Gate 1',
+    viewPreRead: 'View Pre-read',
+    registeredNote: 'Registered for {name} · {date}',
+    modalTitle: 'Choose a Gate 1 event',
+    modalSubtitle: "Only events matching this project's level ({level}: {value}) can be selected.",
+    modalSubtitleNoLevel: 'This project has no Category, Operating Unit, or Country set, so no events can be matched yet.',
+    tabCalendar: 'Calendar',
+    tabList: 'List',
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    legendMatch: 'Level matches',
+    legendNonEligible: 'Not eligible',
+    moreEvents: '+{count} more',
+    loading: 'Loading gate events…',
+    error: "We couldn't load gate events. Please try again.",
+    empty: 'No upcoming Gate 1 events were found.',
+    noEligible: "No upcoming events match this project's level yet — check back later.",
+    listEmpty: 'No events to show.',
+    cancel: 'Cancel',
+    register: 'Register',
+    registering: 'Registering…',
   },
 
   // Templates for labels that interleave static text with a dynamic value.
@@ -197,7 +247,6 @@ export const LABELS = {
     countApproved: '{completed} of {total} Approved',
     countComplete: '{completed} of {total} complete',
     itemsNeedAttention: '{count} Items need attention',
-    generatedBy: 'Generated by {by} · {date}',
   },
 };
 

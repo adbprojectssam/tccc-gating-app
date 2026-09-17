@@ -195,6 +195,7 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           onUpload={() => handleAction('artifacts')}
           preReadSubmitted={preReadSubmitted}
           savedArtifacts={savedArtifacts}
+          keyMetrics={gate.keyMetrics}
           ownerName={project.ownerName}
           registeredEvent={registeredEvent}
           onRegister={() => setRegisterOpen(true)}

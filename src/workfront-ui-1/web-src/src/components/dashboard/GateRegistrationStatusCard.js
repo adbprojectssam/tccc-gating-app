@@ -2,11 +2,14 @@
  * <license header>
  */
 
-import { Button, Text } from '@react-spectrum/s2';
+import { useState } from 'react';
+import { Button, Text, Badge } from '@react-spectrum/s2';
 import Checkmark from '@react-spectrum/s2/icons/Checkmark';
+import CalendarEdit from '@react-spectrum/s2/icons/CalendarEdit';
+import Calendar from '@react-spectrum/s2/icons/Calendar';
 import FileText from '@react-spectrum/s2/icons/FileText';
 import { LABELS, formatLabel } from '../../constants/labels';
-import { cardTitle, dialogDesc, positiveStatus, bodyText, detailText, generatedNote } from './styles';
+import { dialogDesc, bodyText, detailText, preReadPanelTitle, boldLabelText } from './styles';
 
 /** Bytes → "1.2 MB" / "640 KB" (matches the Figma file-size format). */
 function formatSize(bytes) {
@@ -16,69 +19,114 @@ function formatSize(bytes) {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-/** "Oct 15, 2026" for the registered-event confirmation note. */
+/** "Oct 15, 2026" for the registered-event heading/meeting details. */
 function formatEventDate(date) {
   if (!date) return '';
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 /**
- * "Pre-read complete" status card (Figma gating-registration screen). Replaces
- * the onboarding hero banner in <NewProjectView> once the pre-read is confirmed
- * (100%). Shows the first saved artifact on the right, and either the
- * Register/View-Pre-read actions or — once registered — a confirmation note.
+ * Onboarding hero banner that replaces the upload prompt in <NewProjectView>
+ * once the pre-read is confirmed. Two distinct layouts, both from Figma:
+ *  - Not yet registered (1849-101071): "Complete" badge, Register/View-Pre-read
+ *    actions, and every saved artifact in a dashed "Generated Pre-read" box.
+ *  - Registered for a Gate 1 event (1889-122628 / 1932-123418): "Registered"
+ *    badge, a single "View Gate Details" action, and a meeting-details panel
+ *    with an "Add to calendar" toggle (UI-only — no calendar integration
+ *    exists yet, matching how registration itself has no backend persistence).
  */
-function GateRegistrationStatusCard({ facilitatorName, artifact, registeredEvent, onRegister, onViewPreRead }) {
+function GateRegistrationStatusCard({ facilitatorName, artifacts = [], registeredEvent, onRegister, onViewPreRead }) {
   const R = LABELS.gateRegistration;
-  const body = facilitatorName
-    ? formatLabel(R.bodyWithFacilitator, { facilitator: facilitatorName })
-    : R.bodyGeneric;
+  const [addedToCalendar, setAddedToCalendar] = useState(false);
+
+  if (registeredEvent) {
+    return (
+      <section className="es-gate-registration">
+        <div className="es-gate-registration__content">
+          <Badge variant="positive">
+            <Checkmark aria-hidden="true" />
+            <Text>{R.registeredBadge}</Text>
+          </Badge>
+          <h2 className={`es-gate-registration__heading ${preReadPanelTitle}`}>
+            {formatLabel(R.registeredHeading, { name: registeredEvent.name })}
+          </h2>
+          <p className={`es-gate-registration__body ${dialogDesc}`}>
+            {formatLabel(R.registeredBody, {
+              date: formatEventDate(registeredEvent.date),
+              facilitator: facilitatorName,
+            })}
+          </p>
+
+          <div className="es-gate-registration__actions">
+            <Button variant="primary" fillStyle="fill" onPress={onViewPreRead}>
+              <Text>{R.viewGateDetails}</Text>
+            </Button>
+          </div>
+        </div>
+
+        <div className="es-gate-registration__meeting">
+          <div className="es-gate-registration__meeting-icon">
+            <Calendar aria-hidden="true" />
+          </div>
+          <div className="es-gate-registration__meeting-details">
+            <h3 className={boldLabelText}>{R.meetingTitle}</h3>
+            <p className={detailText}>{registeredEvent.name}</p>
+            <p className={detailText}>{formatEventDate(registeredEvent.date)}</p>
+            <p className={detailText}>{formatLabel(R.facilitatorLine, { name: facilitatorName })}</p>
+          </div>
+          <Button
+            variant="secondary"
+            fillStyle="outline"
+            UNSAFE_className={addedToCalendar ? 'es-gate-registration__calendar-btn--added' : 'es-gate-registration__calendar-btn'}
+            onPress={() => setAddedToCalendar(true)}
+          >
+            {addedToCalendar && <Checkmark aria-hidden="true" />}
+            <Text>{R.addToCalendar}</Text>
+          </Button>
+          {addedToCalendar && <p className="es-gate-registration__added">{R.addedToCalendar}</p>}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="es-gate-registration">
       <div className="es-gate-registration__content">
-        <div className="es-gate-registration__step">
+        <Badge variant="positive">
           <Checkmark aria-hidden="true" />
-          <span className={`es-gate-registration__step-label ${positiveStatus}`}>{R.complete}</span>
-        </div>
-        <h2 className={`es-gate-registration__heading ${cardTitle}`}>{R.heading}</h2>
-        <p className={`es-gate-registration__body ${dialogDesc}`}>{body}</p>
+          <Text>{R.complete}</Text>
+        </Badge>
+        <h2 className={`es-gate-registration__heading ${preReadPanelTitle}`}>{R.heading}</h2>
+        <p className={`es-gate-registration__body ${dialogDesc}`}>{R.body}</p>
 
         <div className="es-gate-registration__actions">
-          {registeredEvent ? (
-            <div className={`es-gate-registration__registered ${generatedNote}`}>
-              <Checkmark aria-hidden="true" />
-              <span>
-                {formatLabel(R.registeredNote, {
-                  name: registeredEvent.name,
-                  date: formatEventDate(registeredEvent.date),
-                })}
-              </span>
-            </div>
-          ) : (
-            <Button variant="primary" fillStyle="fill" onPress={onRegister}>
-              <Text>{R.registerButton}</Text>
-            </Button>
-          )}
-          <Button variant="secondary" fillStyle="outline" onPress={onViewPreRead}>
+          <Button variant="primary" fillStyle="fill" onPress={onRegister}>
+            <CalendarEdit />
+            <Text>{R.registerButton}</Text>
+          </Button>
+          <Button variant="primary" fillStyle="outline" onPress={onViewPreRead}>
             <Text>{R.viewPreRead}</Text>
           </Button>
         </div>
       </div>
 
-      {artifact && (
-        <>
-          <div className="es-gate-registration__divider" aria-hidden="true" />
-          <div className="es-gate-registration__artifact">
-            <div className="es-gate-registration__artifact-item">
-              <FileText aria-hidden="true" />
-              <div className="es-gate-registration__artifact-meta">
-                <div className={bodyText}>{artifact.name}</div>
-                <div className={detailText}>{formatSize(artifact.size)}, {LABELS.artifact.uploadedToday}</div>
+      {artifacts.length > 0 && (
+        <div className="es-gate-registration__artifact">
+          <h3 className={boldLabelText}>{R.artifactTitle}</h3>
+          <div className="es-gate-registration__artifact-list">
+            {artifacts.map((artifact) => (
+              <div key={artifact.id || artifact.name} className="es-gate-registration__artifact-item">
+                <FileText aria-hidden="true" />
+                <div className="es-gate-registration__artifact-meta">
+                  <div className={bodyText}>{artifact.name}</div>
+                  <div className={detailText}>
+                    {formatLabel(R.uploadedBy, { size: formatSize(artifact.size), name: facilitatorName })}
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        </>
+        </div>
       )}
     </section>
   );

@@ -21,7 +21,7 @@ import {
   preReadPanelSubtitle,
   preReadSectionTitle,
   preReadValueText,
-  dsfvCardLabel,
+  boldLabelText,
   dsfvCardValue,
   modalScrimBg,
 } from './styles';
@@ -144,7 +144,7 @@ function PreReadSidePanel({ isOpen, onClose, projectTitle, preReadGenerated = fa
                   <div className="es-preread-panel__dsfv">
                     {summary.dsfvSnapshot.map((item) => (
                       <div key={item.label} className="es-preread-panel__dsfv-card">
-                        <div className={dsfvCardLabel}>{item.label}</div>
+                        <div className={boldLabelText}>{item.label}</div>
                         <div className={dsfvCardValue}>{item.value}</div>
                       </div>
                     ))}

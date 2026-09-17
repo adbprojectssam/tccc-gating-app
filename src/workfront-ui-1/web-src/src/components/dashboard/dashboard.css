@@ -1088,11 +1088,11 @@
 .es-gate-registration {
   display: flex;
   gap: 24px;
-  align-items: center;
-  padding: 24px;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  align-items: flex-start;
+  padding: 20px;
+  background: #f8f8f8;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
 }
 .es-gate-registration__content {
   flex: 1 1 auto;
@@ -1100,19 +1100,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-}
-.es-gate-registration__step {
-  display: flex;
-  align-items: center;
   gap: 8px;
-}
-.es-gate-registration__step > svg {
-  flex: none;
-  --iconPrimary: #079355;
-}
-.es-gate-registration__step-label {
-  color: #079355;
 }
 .es-gate-registration__heading {
   margin: 0;
@@ -1126,25 +1114,29 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-top: 4px;
-}
-.es-gate-registration__registered {
-  margin-top: 0;
-}
-.es-gate-registration__divider {
-  align-self: stretch;
-  width: 1px;
-  background: #e1e1e1;
+  /* Figma's gap between the body text and this row is 20px, vs. the 8px
+     __content uses between the badge/heading/body above it. */
+  margin-top: 12px;
 }
 .es-gate-registration__artifact {
   flex: none;
-  width: 200px;
+  width: 343px;
   display: flex;
-  align-items: center;
-  padding: 24px;
-  border: 1px dashed #dadada;
-  border-radius: 8px;
-  background: #f3f3f3;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 2px dashed #dadada;
+  border-radius: 10px;
+  background: #fff;
+}
+.es-gate-registration__artifact h3 {
+  margin: 0;
+}
+.es-gate-registration__artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 .es-gate-registration__artifact-item {
   display: flex;
@@ -1162,6 +1154,71 @@
   gap: 2px;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+/* Registered-state right panel (Figma 1889-122628 / 1932-123418) — replaces
+   the dashed "Generated Pre-read" box once a Gate 1 event is chosen. */
+.es-gate-registration__meeting {
+  flex: none;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.es-gate-registration__meeting-icon {
+  width: 36px;
+  height: 38px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dadada;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.es-gate-registration__meeting-icon::before {
+  content: '';
+  display: block;
+  height: 10px;
+  background: #3b63fb;
+}
+.es-gate-registration__meeting-icon svg {
+  flex: 1 1 auto;
+  width: 16px;
+  height: 16px;
+  margin: auto;
+  --iconPrimary: #292929;
+}
+.es-gate-registration__meeting-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.es-gate-registration__meeting-details h3 {
+  margin: 0;
+}
+.es-gate-registration__meeting-details p {
+  margin: 0;
+}
+.es-gate-registration__calendar-btn,
+.es-gate-registration__calendar-btn--added {
+  width: 100%;
+}
+.es-gate-registration__calendar-btn--added {
+  border-color: #079355 !important;
+  color: #079355 !important;
+}
+.es-gate-registration__calendar-btn--added svg {
+  --iconPrimary: #079355 !important;
+}
+.es-gate-registration__added {
+  margin: 0;
+  font-size: 12px;
+  color: #079355;
 }
 
 /* ---------- "Choose a Gate 1 event" registration modal ---------- */

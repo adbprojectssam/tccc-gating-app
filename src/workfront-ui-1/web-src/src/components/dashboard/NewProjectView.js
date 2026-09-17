@@ -63,6 +63,7 @@ function NewProjectView({
   onUpload,
   preReadSubmitted,
   savedArtifacts = [],
+  keyMetrics,
   ownerName,
   registeredEvent,
   onRegister,
@@ -70,6 +71,10 @@ function NewProjectView({
   readinessCard,
 }) {
   const O = LABELS.onboarding;
+  // Once the pre-read is confirmed, the hero banner's Key Metrics row shows
+  // real values (Figma 1849-101071 / 1889-122628 / 1932-123418) instead of
+  // the "--" placeholders shown before anything's been submitted.
+  const metrics = preReadSubmitted && keyMetrics ? keyMetrics : EMPTY_METRICS;
 
   const pipeline = {
     title: LABELS.sections.gatePipeline,
@@ -85,12 +90,12 @@ function NewProjectView({
 
   return (
     <div className="es-exec">
-      <KeyMetrics data={EMPTY_METRICS} />
+      <KeyMetrics data={metrics} />
 
       {preReadSubmitted ? (
         <GateRegistrationStatusCard
           facilitatorName={ownerName}
-          artifact={savedArtifacts[0]}
+          artifacts={savedArtifacts}
           registeredEvent={registeredEvent}
           onRegister={onRegister}
           onViewPreRead={onViewPreRead}

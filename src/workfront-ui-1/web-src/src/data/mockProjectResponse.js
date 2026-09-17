@@ -42,6 +42,7 @@ export const mockProjectResponse = {
       parentName: 'Stage 1: Strategy to Idea',
       plannedCompletionDate: '2026-01-13T17:00:00:000-0500',
       pmoComments: null,
+      preReadGenerated: true,
       status: 'CPL',
     },
     {
@@ -55,6 +56,7 @@ export const mockProjectResponse = {
       parentName: 'Stage 2: Develop Concept & Business Case',
       plannedCompletionDate: '2026-02-25T15:51:00:000-0500',
       pmoComments: null,
+      preReadGenerated: false,
       status: 'CPL',
     },
     {

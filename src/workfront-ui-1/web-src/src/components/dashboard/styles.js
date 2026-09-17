@@ -79,3 +79,16 @@ export const markerCompleted = style({ backgroundColor: 'positive', color: 'whit
 export const markerCurrent = style({ backgroundColor: 'neutral', color: 'white' });
 export const markerAttention = style({ backgroundColor: 'white', color: 'neutral', borderColor: 'gray-300', borderWidth: 2, borderStyle: 'solid' });
 export const markerNotStarted = style({ backgroundColor: 'white', color: 'disabled', borderColor: 'gray-300', borderWidth: 2, borderStyle: 'solid' });
+
+/* ---------------- Pre-read side panel (Figma 2862-117426) ---------------- */
+// This panel's typography doesn't match the shared dialog/card styles used
+// elsewhere (different weight/size/color), so it gets its own dedicated
+// tokens rather than overloading `dialogTitle`/`cardTitle`/`bodyText`.
+export const preReadPanelTitle = style({ fontSize: 'ui-3xl', fontWeight: 'extra-bold', color: 'neutral' }); // Figma Heading/M = 22px ExtraBold #292929
+export const preReadPanelSubtitle = style({ fontSize: 'ui-sm', color: 'neutral-subdued' }); // Figma Body/XS = 12px #505050
+export const preReadSectionTitle = style({ fontSize: 'ui-lg', fontWeight: 'bold', color: 'heading' }); // Figma Title/M = 16px Bold #131313
+export const preReadValueText = style({ fontSize: 'ui', color: 'heading' }); // Business Case body / metric values / source filenames = 14px Regular #131313
+export const dsfvCardLabel = style({ fontSize: 'ui', fontWeight: 'bold', color: 'neutral' }); // DSFV cards use #292929, not the #131313 heading color the other sections use
+export const dsfvCardValue = style({ fontSize: 'ui', color: 'neutral' });
+// Matches Spectrum's own Modal underlay (Modal.tsx: backgroundColor: 'transparent-black-500').
+export const modalScrimBg = style({ backgroundColor: 'transparent-black-500' });

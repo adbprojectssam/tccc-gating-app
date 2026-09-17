@@ -33,7 +33,7 @@ import { extractFields, submitValidatedFields } from '../../api/artifactClient';
  * rendered. Each section below renders only when its slice exists for that gate,
  * so Gate 1 (no AI/KPI sections) and Gate 2 (full set) share the same code.
  */
-function GatingDashboard({ project, onAction, onGateSelect }) {
+function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) {
   const pipeline = project && project.pipeline;
   const defaultGate = (pipeline && pipeline.currentKey) || project?.defaultGate || '1';
 
@@ -149,6 +149,10 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
         imsOrg: ctx.imsOrg,
       });
       setPreReadSubmitted(true);
+      // Workfront now has the submitted fields (e.g. "DE:Build Stage Gate
+      // Report?" may have flipped) — silently re-fetch so the dashboard
+      // reflects them without a visible reload.
+      if (onProjectRefresh) onProjectRefresh();
     } catch (e) {
       setSubmitError(e.message);
     } finally {
@@ -260,11 +264,8 @@ function GatingDashboard({ project, onAction, onGateSelect }) {
         isOpen={isPreReadPanelOpen}
         onClose={() => setPreReadPanelOpen(false)}
         projectTitle={header.title}
-        fields={fields}
-        onGenerate={() => {
-          setPreReadPanelOpen(false);
-          handleAction('artifacts');
-        }}
+        preReadGenerated={!!gate.preReadGenerated}
+        preReadSummary={project.preReadSummary}
         onUpdatePreRead={() => {
           setPreReadPanelOpen(false);
           setExtractError('');

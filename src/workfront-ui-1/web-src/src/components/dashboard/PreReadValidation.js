@@ -120,8 +120,10 @@ function PreReadValidation({
     if (bucket === 'high') {
       return (
         <InlineAlert key={i} variant="positive" styles={fullWidth}>
-          <Heading>{label}</Heading>
-          <Content>{formatLabel(LABELS.fieldReview.valueLine, { value: displayValue(f, i) })}</Content>
+          <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
+          <Content UNSAFE_className="es-gate1__card-body">
+            {formatLabel(LABELS.fieldReview.valueLine, { value: displayValue(f, i) })}
+          </Content>
         </InlineAlert>
       );
     }
@@ -133,8 +135,10 @@ function PreReadValidation({
       // class recolors it to match this tab instead of green.
       return (
         <InlineAlert key={i} variant="positive" styles={fullWidth} UNSAFE_className={`es-gate1__resolved--${bucket}`}>
-          <Heading>{label}</Heading>
-          <Content>{formatLabel(LABELS.fieldReview.valueLine, { value: displayValue(f, i) })}</Content>
+          <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
+          <Content UNSAFE_className="es-gate1__card-body">
+            {formatLabel(LABELS.fieldReview.valueLine, { value: displayValue(f, i) })}
+          </Content>
         </InlineAlert>
       );
     }
@@ -142,14 +146,15 @@ function PreReadValidation({
     if (bucket === 'conflict') {
       return (
         <InlineAlert key={i} variant="negative" styles={fullWidth}>
-          <Heading>{label}</Heading>
-          <Content>
+          <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
+          <Content UNSAFE_className="es-gate1__card-body">
             {formatLabel(LABELS.fieldReview.conflictHint, { workfrontValue: f.workfrontValue, value: f.value })}
           </Content>
           {openEditors[i] ? (
             <Picker
               aria-label={formatLabel(LABELS.fieldReview.resolveAriaLabel, { label })}
               styles={fullWidth}
+              UNSAFE_className="es-gate1__conflict-picker"
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               onSelectionChange={(key) => resolveConflict(i, String(key))}
@@ -182,8 +187,10 @@ function PreReadValidation({
         styles={fullWidth}
         UNSAFE_className={missing ? 'es-gate1__missing-icon' : undefined}
       >
-        <Heading>{missing ? `${label}${LABELS.fieldReview.missingSuffix}` : label}</Heading>
-        <Content>
+        <Heading UNSAFE_className="es-gate1__card-title">
+          {missing ? `${label}${LABELS.fieldReview.missingSuffix}` : label}
+        </Heading>
+        <Content UNSAFE_className="es-gate1__card-body">
           {missing
             ? LABELS.fieldReview.missingHint
             : formatLabel(LABELS.fieldReview.confidenceHint, {

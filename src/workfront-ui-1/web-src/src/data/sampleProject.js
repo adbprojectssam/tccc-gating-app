@@ -55,10 +55,27 @@ export const sampleProject = {
     ],
   },
 
+  // Pre-read side panel's Business Case Summary + Key Metrics — project-level,
+  // so it's shared across gates (see `mapWorkfrontProject.js`'s real
+  // equivalent). "Launch Market" is left blank to exercise the panel's
+  // "UPDATE" prompt for a missing field.
+  preReadSummary: {
+    businessCaseSummary:
+      "Flashlyte Zero platform extension into Mexico. Fills a gap in BODYARMOR's zero-sugar hydration lineup for active, health-conscious consumers post-workout.",
+    keyMetrics: [
+      { label: LABELS.metrics.absoluteVolume, value: '1000K UC' },
+      { label: LABELS.metrics.incrementalVolume, value: '80K UC' },
+      { label: LABELS.metrics.gpMargin, value: '36.0%' },
+      { label: LABELS.metrics.capex, value: '$280K' },
+      { label: LABELS.metrics.launchMarket, value: '' },
+    ],
+  },
+
   gateData: {
     /* ------------------------------- GATE 1 ------------------------------- */
     1: {
       id: '695c0f0c00edf116d48d59fbb4200ca9',
+      preReadGenerated: true,
       keyMetrics: {
         title: LABELS.sections.keyMetrics,
         metrics: [
@@ -134,6 +151,7 @@ export const sampleProject = {
     /* ------------------------------- GATE 2 ------------------------------- */
     2: {
       id: '695c0f0c00edf116d48d59fbb4200ca8',
+      preReadGenerated: false,
       keyMetrics: {
         title: LABELS.sections.keyMetrics,
         metrics: [

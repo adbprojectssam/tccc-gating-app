@@ -116,4 +116,4 @@ export async function deleteArtifact({ documentId, hostname, imsToken, imsOrg })
   return result.data || {};
 }
 
-export default { uploadArtifact, extractFields, deleteArtifact };
+export default { uploadArtifact, extractFields, submitValidatedFields, deleteArtifact };

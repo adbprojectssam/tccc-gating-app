@@ -238,6 +238,23 @@ export function mapWorkfrontProject(raw) {
     },
   ];
 
+  // Pre-read side panel's Business Case Summary + Key Metrics table — plain
+  // {label, value} pairs (no chart/visual metadata, unlike `metrics` above,
+  // which is built for the exec dashboard's KeyMetrics cards). Project-level
+  // DE fields, so this is computed once and shared by every gate. A blank
+  // `value` means the field is missing — the panel renders an "UPDATE" prompt
+  // for it instead of a dash.
+  const preReadSummary = {
+    businessCaseSummary: de('Initiative Description') || '',
+    keyMetrics: [
+      { label: LABELS.metrics.absoluteVolume, value: isEmpty(de('Absolute Volume Calendar Year 1')) ? '' : volume(de('Absolute Volume Calendar Year 1')) },
+      { label: LABELS.metrics.incrementalVolume, value: isEmpty(de('Incremental Volume Calendar Year 1')) ? '' : volume(de('Incremental Volume Calendar Year 1')) },
+      { label: LABELS.metrics.gpMargin, value: hasGpMargin ? gpMarginValue : '' },
+      { label: LABELS.metrics.capex, value: hasCapex ? moneyK(capexNum) : '' },
+      { label: LABELS.metrics.launchMarket, value: de('Leading Market') || '' },
+    ],
+  };
+
   const tags = [
     operatingUnit && formatLabel(LABELS.templates.tag, { label: LABELS.tags.ou, value: operatingUnit }),
     category && formatLabel(LABELS.templates.tag, { label: LABELS.tags.category, value: category }),
@@ -327,6 +344,10 @@ export function mapWorkfrontProject(raw) {
         // Workfront Task object id for this gate — needed when submitting
         // validated pre-read fields back against the right task.
         id: g.id,
+        // Whether a pre-read already exists for this gate (from Workfront
+        // field "DE:Build Stage Gate Report?") — drives whether the pre-read
+        // side panel shows the summary or the "no pre-read generated" state.
+        preReadGenerated: !!g.preReadGenerated,
         keyMetrics: { title: LABELS.sections.keyMetrics, metrics },
         gateDetail: buildGateDetail(g),
         ioFields,
@@ -382,6 +403,10 @@ export function mapWorkfrontProject(raw) {
     registrationLevel,
 
     header: { title: raw.name || '', subtitle, actions: HEADER_ACTIONS },
+
+    // Business Case Summary + Key Metrics for the pre-read side panel (see
+    // above) — project-level, so it's the same regardless of selected gate.
+    preReadSummary,
 
     // Empty state — no "need attention" API.
     needAttention: {

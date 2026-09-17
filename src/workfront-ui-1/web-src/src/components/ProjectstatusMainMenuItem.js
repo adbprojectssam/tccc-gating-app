@@ -49,6 +49,16 @@ const ProjectstatusMainMenuItem = () => {
     };
   }, []);
 
+  // Silent refresh: re-fetches the project (e.g. after a successful
+  // submit-validated-fields call, so fields the pre-read just wrote back to
+  // Workfront show up) without dropping into the "loading" state — only
+  // swaps in the new project once it's ready, keeping the current UI up
+  // until then.
+  const refreshProject = async () => {
+    const result = await loadProject();
+    setState((prev) => ({ ...prev, ...result, status: "loaded" }));
+  };
+
   let content;
   if (state.status === "loading") {
     content = (
@@ -57,7 +67,7 @@ const ProjectstatusMainMenuItem = () => {
       </div>
     );
   } else if (state.project) {
-    content = <GatingDashboard project={state.project} />;
+    content = <GatingDashboard project={state.project} onProjectRefresh={refreshProject} />;
   } else {
     content = (
       <div className={errorWrap}>

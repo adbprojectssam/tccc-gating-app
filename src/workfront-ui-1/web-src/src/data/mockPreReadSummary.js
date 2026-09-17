@@ -3,24 +3,16 @@
  */
 
 /**
- * TEMPORARY mock for the pre-read side panel's summary content (Business Case
- * Summary, Key Metrics, DSFV Snapshot, Source). None of this is part of the
- * extract-fields response shape, and no backend/API produces it yet — remove
- * this module and wire the panel to a real source once one exists.
+ * TEMPORARY mock for the pre-read side panel's DSFV Snapshot + Source, plus
+ * the facilitator name used in the "shared with" banner. Business Case
+ * Summary and Key Metrics now come from real project DE fields (see
+ * `mapWorkfrontProject.js`'s `preReadSummary`) — DSFV has no backend/API
+ * source yet, so it stays here until one exists.
  */
 import { LABELS } from '../constants/labels';
 
 export const MOCK_PRE_READ_SUMMARY = {
   facilitatorName: 'Sara Estrada Olvera',
-  businessCaseSummary:
-    'Coca-Cola Zero Sugar Cherry launch targeting the Brazil sparkling flavors portfolio, positioned to extend the Zero Sugar line with incremental volume from younger LDA consumers.',
-  keyMetrics: [
-    { label: LABELS.metrics.absoluteVolume, value: '64,200 UC' },
-    { label: LABELS.metrics.incrementalVolume, value: '18,500 UC' },
-    { label: LABELS.metrics.gpMargin, value: '31%' },
-    { label: LABELS.metrics.capex, value: '$1.2M' },
-    { label: LABELS.metrics.launchMarket, value: 'Brazil (national)' },
-  ],
   dsfvSnapshot: [
     { label: LABELS.dsfv.desirability, value: 'Concept tested positively with target LDA cohort.' },
     { label: LABELS.dsfv.sellability, value: 'Fits existing Zero Sugar distribution & shelf sets.' },

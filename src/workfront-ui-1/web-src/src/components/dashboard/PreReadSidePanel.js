@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Button, Text, CloseButton, InlineAlert, Content } from '@react-spectrum/s2';
+import { Button, Text, CloseButton, InlineAlert, Content, ProgressCircle } from '@react-spectrum/s2';
 import ChevronDown from '@react-spectrum/s2/icons/ChevronDown';
 import Refresh from '@react-spectrum/s2/icons/Refresh';
 import Download from '@react-spectrum/s2/icons/Download';
@@ -47,7 +47,17 @@ import {
  * it — along with the facilitator name and source files — still comes from
  * the temporary `mockPreReadSummary.js` until a real source exists.
  */
-function PreReadSidePanel({ isOpen, onClose, projectTitle, preReadGenerated = false, preReadSummary, onUpdatePreRead, onDownloadPdf }) {
+function PreReadSidePanel({
+  isOpen,
+  onClose,
+  projectTitle,
+  preReadGenerated = false,
+  preReadSummary,
+  onUpdatePreRead,
+  onDownloadPdf,
+  isDownloading = false,
+  downloadError = '',
+}) {
   // Mounted immediately at its closed (off-screen) position, then flipped to
   // "entered" a frame later so the transform/opacity transitions to their
   // open values actually animate instead of snapping straight there.
@@ -165,16 +175,23 @@ function PreReadSidePanel({ isOpen, onClose, projectTitle, preReadGenerated = fa
         </div>
 
         {hasPreRead && (
-          <div className="es-preread-panel__footer">
-            <Button variant="primary" fillStyle="outline" onPress={onUpdatePreRead}>
-              <Refresh />
-              <Text>{LABELS.preReadPanel.updatePreRead}</Text>
-            </Button>
-            <Button variant="primary" fillStyle="fill" onPress={onDownloadPdf}>
-              <Download />
-              <Text>{LABELS.preReadPanel.downloadPdf}</Text>
-            </Button>
-          </div>
+          <>
+            {downloadError && <div className="es-artifact__file-error">{downloadError}</div>}
+            <div className="es-preread-panel__footer">
+              <Button variant="primary" fillStyle="outline" onPress={onUpdatePreRead}>
+                <Refresh />
+                <Text>{LABELS.preReadPanel.updatePreRead}</Text>
+              </Button>
+              <Button variant="primary" fillStyle="fill" isDisabled={isDownloading} onPress={onDownloadPdf}>
+                {isDownloading ? (
+                  <ProgressCircle size="S" isIndeterminate aria-label={LABELS.preReadPanel.downloadPdf} staticColor="white" />
+                ) : (
+                  <Download />
+                )}
+                <Text>{LABELS.preReadPanel.downloadPdf}</Text>
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </>

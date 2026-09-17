@@ -24,6 +24,7 @@ import PreReadValidation from './PreReadValidation';
 import { dashboardBase } from './styles';
 import { getImsAuth } from '../../api/imsAuth';
 import { extractFields, submitValidatedFields } from '../../api/artifactClient';
+import { fetchProjectDocuments, findGatePreReadDocument } from '../../api/documentsClient';
 
 /**
  * Top-level composition of the gating dashboard.
@@ -66,6 +67,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // Set once the user successfully registers for a Gate 1 event — shown as a
   // confirmation note on the status card.
   const [registeredEvent, setRegisteredEvent] = useState(null);
+  // Drives the loading/error state on the pre-read side panel's "Download"
+  // button while the generated pre-read document is being located.
+  const [isDownloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   if (!project) return null;
 
@@ -157,6 +162,34 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
       setSubmitError(e.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // "Download" on the pre-read side panel: finds this gate's generated
+  // pre-read among the project's Workfront documents (a "DOCU" named
+  // "Gate {number} pre-read" and attached to this gate's own task), then
+  // opens its downloadURL directly — same-origin navigation within the
+  // Workfront host, authenticated by the user's existing Workfront session.
+  const handleDownloadPreRead = async () => {
+    setDownloading(true);
+    setDownloadError('');
+    try {
+      const ctx = await getImsAuth();
+      const documents = await fetchProjectDocuments({
+        projectId: ctx.projectId,
+        hostname: ctx.hostname,
+        imsToken: ctx.imsToken,
+        imsOrg: ctx.imsOrg,
+      });
+      const match = findGatePreReadDocument(documents, { gateNumber: selectedGate, taskId: gate.id });
+      if (!match || !match.downloadURL) {
+        throw new Error(`No pre-read document found for Gate ${selectedGate}.`);
+      }
+      window.open(`https://${ctx.hostname}${match.downloadURL}`, '_blank', 'noopener');
+    } catch (e) {
+      setDownloadError(e.message);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -272,9 +305,9 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           setExtractError('');
           setUpdatePreReadOpen(true);
         }}
-        onDownloadPdf={() => {
-          /* stub: download the generated pre-read (no backend yet) */
-        }}
+        onDownloadPdf={handleDownloadPreRead}
+        isDownloading={isDownloading}
+        downloadError={downloadError}
       />
 
       <DialogContainer onDismiss={() => setRegisterOpen(false)}>

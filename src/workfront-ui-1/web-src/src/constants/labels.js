@@ -237,6 +237,7 @@ export const LABELS = {
     nextMonth: 'Next month',
     legendMatch: 'Level matches',
     legendNonEligible: 'Not eligible',
+    notEligibleReason: 'Not eligible - {level}: {value}',
     moreEvents: '+{count} more',
     loading: 'Loading gate events…',
     error: "We couldn't load gate events. Please try again.",

@@ -314,6 +314,8 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
         {isRegisterOpen && (
           <GateEventSelectorDialog
             registrationLevel={project.registrationLevel}
+            registrationMatchFields={project.registrationMatchFields}
+            taskId={gate.id}
             onCancel={() => setRegisterOpen(false)}
             onRegistered={(event) => {
               setRegisteredEvent(event);

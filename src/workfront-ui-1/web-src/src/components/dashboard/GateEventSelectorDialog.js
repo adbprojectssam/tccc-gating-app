@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CustomDialog, CloseButton, Button, ActionButton, ToggleButtonGroup, ToggleButton, ProgressCircle, Text } from '@react-spectrum/s2';
 import AlertDiamond from '@react-spectrum/s2/icons/AlertDiamond';
+import Checkmark from '@react-spectrum/s2/icons/Checkmark';
 import CalendarIcon from '@react-spectrum/s2/icons/Calendar';
 import ListBulleted from '@react-spectrum/s2/icons/ListBulleted';
 import ChevronLeft from '@react-spectrum/s2/icons/ChevronLeft';
@@ -38,14 +39,26 @@ function buildMonthGrid(year, month) {
   return weeks;
 }
 
+// Meeting's "DE:What level is your Gate Meeting?" value → which project-side
+// field (from `registrationMatchFields`) that level's own value is checked
+// against. Matches the product rule: OU↔Operating Unit, Country↔Leading
+// Market vs. the meeting's Primary Launch Market Country, Category↔Global
+// Category — independent of whichever single level this project would show
+// in its own subtitle (`registrationLevel`).
+const LEVEL_MATCH_KEY = { OU: 'operatingUnit', Country: 'leadingMarket', Category: 'category' };
+
 /**
  * "Choose a Gate 1 event" registration modal (Figma gate-event-selector).
- * Fetches candidate Gate 1 meeting events on open, lets the user pick one that
- * matches this project's registration level (Category/OU/Country), and
- * registers for it. The List tab (undesigned in Figma) is a minimal flat list
- * over the same data.
+ * Fetches candidate Gate 1 meeting events on open, lets the user pick one
+ * that's eligible, and registers the selected gate (`taskId`, its own
+ * Workfront task id) for it. A meeting is eligible only when BOTH:
+ *  - this project's `DE:Initiative Type` is one of the meeting's own
+ *    `DE:Initiative Type Multiselect` values, AND
+ *  - the project field matching the meeting's OWN declared level (OU/Country/
+ *    Category — see LEVEL_MATCH_KEY) equals that meeting's level value.
+ * The List tab is a minimal flat list over the same data.
  */
-function GateEventSelectorDialog({ registrationLevel, onCancel, onRegistered }) {
+function GateEventSelectorDialog({ registrationLevel, registrationMatchFields, taskId, onCancel, onRegistered }) {
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const [error, setError] = useState('');
   const [events, setEvents] = useState([]);
@@ -57,6 +70,16 @@ function GateEventSelectorDialog({ registrationLevel, onCancel, onRegistered }) 
   const [registerError, setRegisterError] = useState('');
   const ctxRef = useRef(null);
 
+  const isEligible = (e) => {
+    const f = registrationMatchFields;
+    if (!f || !f.initiativeType) return false;
+    if (!(e.initiativeTypes || []).includes(f.initiativeType)) return false;
+    const matchKey = LEVEL_MATCH_KEY[e.level];
+    if (!matchKey) return false;
+    const projectValue = f[matchKey];
+    return !!projectValue && e.levelValue === projectValue;
+  };
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -66,9 +89,7 @@ function GateEventSelectorDialog({ registrationLevel, onCancel, onRegistered }) 
         const list = await fetchGateEvents({ hostname: ctx.hostname, imsToken: ctx.imsToken, imsOrg: ctx.imsOrg });
         if (!active) return;
         setEvents(list);
-        const eligible = registrationLevel
-          ? list.filter((e) => e.level === registrationLevel.level && e.levelValue === registrationLevel.value)
-          : [];
+        const eligible = list.filter(isEligible);
         const earliest = (eligible.length ? eligible : list).reduce(
           (min, e) => (!min || e.date < min.date ? e : min),
           null,
@@ -86,12 +107,11 @@ function GateEventSelectorDialog({ registrationLevel, onCancel, onRegistered }) 
     return () => {
       active = false;
     };
-    // registrationLevel is fixed for the dialog's lifetime.
+    // registrationMatchFields is fixed for the dialog's lifetime.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isEligible = (e) => !!registrationLevel && e.level === registrationLevel.level && e.levelValue === registrationLevel.value;
-  const eligibleCount = useMemo(() => events.filter(isEligible).length, [events, registrationLevel]);
+  const eligibleCount = useMemo(() => events.filter(isEligible).length, [events, registrationMatchFields]);
   const selectedEvent = events.find((e) => e.id === selectedId) || null;
 
   const selectEvent = (e) => {
@@ -124,9 +144,9 @@ function GateEventSelectorDialog({ registrationLevel, onCancel, onRegistered }) 
     try {
       const ctx = ctxRef.current || (await getImsAuth());
       await registerForGateEvent({
-        projectId: ctx.projectId,
+        hostname: ctx.hostname,
+        taskId,
         gateEventId: selectedEvent.id,
-        gateEventName: selectedEvent.name,
         imsToken: ctx.imsToken,
         imsOrg: ctx.imsOrg,
       });
@@ -299,9 +319,21 @@ function GateEventSelectorDialog({ registrationLevel, onCancel, onRegistered }) 
                         disabled={!eligible}
                         onClick={() => selectEvent(e)}
                       >
-                        <span className={`es-ges__dot ${eligible ? 'es-ges__dot--match' : 'es-ges__dot--none'}`} />
-                        <span className="es-ges__row-name">{e.name}</span>
-                        <span className="es-ges__row-date">{formatEventDate(e.date)}</span>
+                        <span className={`es-ges__radio ${selected ? 'es-ges__radio--selected' : ''}`} aria-hidden="true" />
+                        <span className="es-ges__row-details">
+                          <span className="es-ges__row-name">{e.name}</span>
+                          <span className="es-ges__row-date">{formatEventDate(e.date)}</span>
+                        </span>
+                        {eligible ? (
+                          <span className="es-ges__row-status es-ges__row-status--match">
+                            <Checkmark aria-hidden="true" />
+                            {R.legendMatch}
+                          </span>
+                        ) : (
+                          <span className="es-ges__row-status es-ges__row-status--none">
+                            {formatLabel(R.notEligibleReason, { level: LEVEL_LABEL[e.level] || e.level, value: e.levelValue })}
+                          </span>
+                        )}
                       </button>
                     );
                   })

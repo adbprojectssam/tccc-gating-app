@@ -178,6 +178,18 @@ export function mapWorkfrontProject(raw) {
         ? { level: 'Country', value: market }
         : null;
 
+  // Full set of project-side fields the Gate 1 event-selector checks a
+  // meeting against — unlike `registrationLevel` (a single "primary" level,
+  // priority-ordered, used only for the modal's subtitle sentence), every
+  // meeting is eligible per its OWN declared level, so all three level-value
+  // fields plus the initiative-type gate must be available at once.
+  const registrationMatchFields = {
+    operatingUnit,
+    leadingMarket: de('Leading Market'),
+    category,
+    initiativeType: de('Initiative Type'),
+  };
+
   // KPI cards. Volumes render in K notation with the "position in forecast
   // range" sparkline; GP Margin shows the Actual-vs-Benchmark bars. The API has
   // no forecast distribution or benchmark, so the sparkline uses a placeholder
@@ -401,6 +413,8 @@ export function mapWorkfrontProject(raw) {
     // This project's Gate 1 registration level/value (see above) — used to
     // filter/highlight eligible events in the "Choose a Gate 1 event" modal.
     registrationLevel,
+    // Full per-level field set (see above) — the actual eligibility check.
+    registrationMatchFields,
 
     header: { title: raw.name || '', subtitle, actions: HEADER_ACTIONS },
 

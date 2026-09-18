@@ -85,6 +85,8 @@ runtimeManifest:
           runtime: nodejs:18
           inputs:
             LOG_LEVEL: info
+            WORKFRONT_API_KEY: $WORKFRONT_API_KEY
+            WORKFRONT_ALLOWED_HOSTS: $WORKFRONT_ALLOWED_HOSTS
           annotations:
             require-adobe-auth: true
             final: true

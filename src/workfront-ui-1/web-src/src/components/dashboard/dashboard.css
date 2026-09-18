@@ -1391,36 +1391,87 @@
 .es-ges__row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 16px;
+  padding: 10px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
   font: inherit;
   text-align: left;
   cursor: default;
-  color: #9ca3af;
+  opacity: 0.6;
 }
 .es-ges__row--eligible {
   cursor: pointer;
-  color: #292929;
+  opacity: 1;
 }
 .es-ges__row--selected {
-  border: 1.5px solid #079355;
-  background: #f0fdf4;
+  border: 2px solid #079355;
+  background: #edfaed;
 }
-.es-ges__row-name {
+.es-ges__radio {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #9ca3af;
+  box-sizing: border-box;
+}
+.es-ges__row--eligible .es-ges__radio {
+  border-color: #079355;
+}
+.es-ges__radio--selected {
+  border-width: 6px;
+  border-color: #079355;
+}
+.es-ges__row-details {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.es-ges__row-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #292929;
+}
+.es-ges__row--eligible .es-ges__row-name {
+  color: #292929;
+}
+.es-ges__row:not(.es-ges__row--eligible) .es-ges__row-name {
+  color: #8f8f8f;
 }
 .es-ges__row-date {
+  font-size: 13px;
+  color: #505050;
+}
+.es-ges__row:not(.es-ges__row--eligible) .es-ges__row-date {
+  color: #8f8f8f;
+}
+.es-ges__row-status {
   flex: none;
-  font-size: 12px;
-  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.es-ges__row-status--match {
+  color: #079355;
+}
+.es-ges__row-status--match svg {
+  width: 14px;
+  height: 14px;
+  --iconPrimary: #079355;
+}
+.es-ges__row-status--none {
+  font-weight: 400;
+  color: #8f8f8f;
 }
 .es-ges__footer {
   display: flex;

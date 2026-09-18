@@ -2,7 +2,7 @@
  * <license header>
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Button,
   Text,
@@ -29,6 +29,41 @@ import { dialogDesc, bannerBody, progressWidth, fullWidth } from './styles';
 // Confidence below this (90%) means the extraction is unsure — the field needs
 // the user to confirm/enter a value before it counts as "complete".
 const LOW_CONFIDENCE = 0.9;
+
+/**
+ * The extraction agent can return multiple entries for the same field name —
+ * e.g. several "risks" or "evidence_highlights" bullets, each its own array
+ * item with its own confidence. Left as-is, that field would render as
+ * several duplicate-labeled cards, sometimes split across different tabs
+ * when the bullets' confidences straddle LOW_CONFIDENCE. Merge same-named
+ * entries into one card instead: values joined into a single string, and
+ * confidence set to the LOWEST among them (if any one bullet needs review,
+ * the whole field does). Fields that only appear once pass through unchanged.
+ */
+function mergeDuplicateFields(fields) {
+  const order = [];
+  const byField = new Map();
+  fields.forEach((f) => {
+    if (!byField.has(f.field)) {
+      order.push(f.field);
+      byField.set(f.field, []);
+    }
+    byField.get(f.field).push(f);
+  });
+  return order.map((key) => {
+    const group = byField.get(key);
+    if (group.length === 1) return group[0];
+    const values = group.map((f) => f.value).filter((v) => v != null && String(v).trim() !== '');
+    const confidence = group.reduce((min, f) => Math.min(min, Number(f.confidence) || 0), Infinity);
+    const workfrontValue = group.map((f) => f.workfrontValue).find((v) => v != null && String(v).trim() !== '');
+    return {
+      ...group[0],
+      value: values.length ? values.join('; ') : null,
+      confidence: Number.isFinite(confidence) ? confidence : 0,
+      workfrontValue,
+    };
+  });
+}
 
 /**
  * Gate 1 readiness card. Rendered inline in the dashboard (not a popup) once
@@ -68,6 +103,10 @@ function PreReadValidation({
   const [drafts, setDrafts] = useState({}); // index → current free-text editor value
   const [activeTab, setActiveTab] = useState('high');
 
+  // One entry per field name (see mergeDuplicateFields) — everything below
+  // indexes into this, not the raw `fields` prop.
+  const mergedFields = useMemo(() => mergeDuplicateFields(fields), [fields]);
+
   const hasValue = (f) => f.value != null && String(f.value).trim() !== '';
   const hasConflict = (f) => {
     const wf = f.workfrontValue;
@@ -100,8 +139,8 @@ function PreReadValidation({
   };
 
   const buckets = { high: [], low: [], conflict: [], missing: [] };
-  fields.forEach((f, i) => buckets[bucketOf(f)].push({ f, i }));
-  const total = fields.length;
+  mergedFields.forEach((f, i) => buckets[bucketOf(f)].push({ f, i }));
+  const total = mergedFields.length;
 
   // Every high-confidence field counts, plus any low/conflict/missing field
   // the user has resolved in place — this is exactly the Submit for Review
@@ -244,7 +283,7 @@ function PreReadValidation({
         </span>
       }
     >
-      {fields.length === 0 ? (
+      {mergedFields.length === 0 ? (
         <p className={dialogDesc}>{LABELS.fieldReview.empty}</p>
       ) : (
         <>

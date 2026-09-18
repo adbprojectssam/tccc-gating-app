@@ -36,6 +36,7 @@ const TASK_FIELDS = [
   "DE:PMO Comments",
   "actualCompletionDate",
   "plannedCompletionDate",
+  "DE:Gate Meeting Innovation",
   "DE:Build Stage Gate Report?"
 ].join(",");
 
@@ -169,6 +170,7 @@ async function main(params) {
         actualCompletionDate: details?.actualCompletionDate || null,
         plannedCompletionDate: details?.plannedCompletionDate || null,
         preReadGenerated: details?.["DE:Build Stage Gate Report?"]?.toLowerCase() === 'report built' || false,
+        gateMeetingRegistered: !!(details && details["DE:Gate Meeting Innovation"]),
       });
       if (!completed) break;
     }

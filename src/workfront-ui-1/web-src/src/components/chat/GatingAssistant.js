@@ -101,10 +101,10 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
   const lastMsgRef = useRef(null);
 
   // Once the project has loaded (get-project completed), show the launcher
-  // right away and prime the conversation in the background: send the project id
-  // (invisible), then classify the project as event / non-event by its
-  // portfolio. Both messages thread the same contextId so later prompts inherit
-  // the context (user prompts await primePromiseRef, so they still wait for it).
+  // right away and prime the conversation in the background: a single prompt
+  // carrying both the project id and the event/non-event classification (by
+  // portfolio), so priming is one round trip instead of two sequential ones.
+  // User prompts await primePromiseRef, so they still wait for this to land.
   useEffect(() => {
     if (primedRef.current) return;
     // `undefined` means the project hasn't loaded (or failed) — wait; a string
@@ -118,23 +118,16 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
       authRef.current = auth;
       if (!auth || !auth.imsToken) return; // no session (e.g. local dev)
       try {
-        if (auth.projectId) {
-          const r1 = await streamChat({
-            prompt: `project id ${auth.projectId}`,
-            imsToken: auth.imsToken,
-            imsOrg: auth.imsOrg,
-          });
-          if (r1 && r1.contextId) contextIdRef.current = r1.contextId;
-        }
-        // Classify using the first prime's contextId (kept canonical — we don't
-        // overwrite it with this call's result).
         const isEvent = portfolioId === EVENT_PORTFOLIO_ID;
-        await streamChat({
-          prompt: isEvent ? 'the project is an event type' : 'the project is non-event type',
+        const parts = [];
+        if (auth.projectId) parts.push(`project id ${auth.projectId}`);
+        parts.push(isEvent ? 'this is event project' : 'this is non-event project');
+        const r = await streamChat({
+          prompt: parts.join('; '),
           imsToken: auth.imsToken,
           imsOrg: auth.imsOrg,
-          conversationId: contextIdRef.current || undefined,
         });
+        if (r && r.contextId) contextIdRef.current = r.contextId;
       } catch (e) {
         /* priming is best-effort */
       }

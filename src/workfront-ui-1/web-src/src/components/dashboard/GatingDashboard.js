@@ -25,6 +25,7 @@ import { dashboardBase } from './styles';
 import { getImsAuth } from '../../api/imsAuth';
 import { extractFields, submitValidatedFields } from '../../api/artifactClient';
 import { fetchProjectDocuments, findGatePreReadDocument } from '../../api/documentsClient';
+import { LABELS, formatLabel } from '../../constants/labels';
 
 /**
  * Top-level composition of the gating dashboard.
@@ -38,7 +39,11 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const pipeline = project && project.pipeline;
   const defaultGate = (pipeline && pipeline.currentKey) || project?.defaultGate || '1';
 
-  const [selectedGate, setSelectedGate] = useState('1');
+  // Seeds from the project's own computed default (pipeline.currentKey, or
+  // project.defaultGate, falling back to '1') so the first-relevant gate is
+  // selected on load — including for a brand-new project — instead of always
+  // assuming gate 1 is the right key.
+  const [selectedGate, setSelectedGate] = useState(defaultGate);
   const [isAttentionOpen, setAttentionOpen] = useState(false);
   const [isArtifactOpen, setArtifactOpen] = useState(false);
   // Bumped every time the Artifacts popup opens so it remounts fresh — the
@@ -85,6 +90,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const handleAction = (id) => {
     if (id === 'need-attention') {
       setAttentionOpen(true);
+      return;
+    }
+    if (id === 'register-gate') {
+      setRegisterOpen(true);
       return;
     }
     if (id === 'artifacts') {
@@ -143,6 +152,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // submit-validated-fields action, against the currently selected gate's
   // Workfront task id. Only flips to "submitted" once that call succeeds.
   const handleSubmitForReview = async (validatedFields) => {
+    if (!gate.id) {
+      setSubmitError('This gate has no Workfront task yet, so there is nothing to submit against.');
+      return;
+    }
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -195,9 +208,24 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
 
   const isNew = !!project.isNew;
   // The onboarding header drops the "Need Attention" CTA (Figma new-project state).
-  const header = isNew
-    ? { ...project.header, actions: (project.header.actions || []).filter((a) => a.id !== 'need-attention') }
-    : project.header;
+  const baseActions = (project.header.actions || []).filter((a) => !(isNew && a.id === 'need-attention'));
+  // Prepended when the selected gate has a real Workfront task that isn't
+  // registered for a Gate meeting event yet ("DE:Gate Meeting Innovation" is
+  // empty) — leftmost pill in the header action row.
+  const registerAction =
+    gate.id && !gate.gateMeetingRegistered
+      ? {
+          id: 'register-gate',
+          label: formatLabel(LABELS.gateRegistration.registerHeaderButton, { number: selectedGate }),
+          variant: 'secondary',
+          fillStyle: 'outline',
+          icon: 'calendarEdit',
+        }
+      : null;
+  const header = {
+    ...project.header,
+    actions: registerAction ? [registerAction, ...baseActions] : baseActions,
+  };
 
   // Built once, used wherever it's relevant: the new-project onboarding view
   // and the regular exec dashboard both just render this (or not) — artifacts

@@ -16,6 +16,7 @@ import Checkmark from '@react-spectrum/s2/icons/Checkmark';
 import CheckmarkCircle from '@react-spectrum/s2/icons/CheckmarkCircle';
 import InfoCircle from '@react-spectrum/s2/icons/InfoCircle';
 import Calendar from '@react-spectrum/s2/icons/Calendar';
+import CalendarEdit from '@react-spectrum/s2/icons/CalendarEdit';
 import Close from '@react-spectrum/s2/icons/Close';
 import Settings from '@react-spectrum/s2/icons/Settings';
 
@@ -30,6 +31,7 @@ const registry = {
   checkmarkCircle: CheckmarkCircle, // "Approved Unanimously" banner (Figma: S2_Icon_CheckmarkCircle)
   infoCircle: InfoCircle, // "Locked" info banner (Figma: S2_Icon_InfoCircle)
   calendar: Calendar, // Approval table date column (Figma: S2_Icon_Calendar)
+  calendarEdit: CalendarEdit, // "Register for Gate N" header CTA
   close: Close, // blocked factor chip
   settings: Settings, // Configure Approvers
 };

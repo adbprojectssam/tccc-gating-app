@@ -45,6 +45,8 @@ runtimeManifest:
           function: actions/extract-fields/index.js
           web: 'yes'
           runtime: nodejs:18
+          limits:
+            timeout: 300000
           inputs:
             LOG_LEVEL: info
           annotations:

@@ -7,11 +7,21 @@
  *
  * Given a project id and the uploaded Workfront document ids, it calls the
  * Adobe agent, which reads the documents and returns extracted field values
- * (`[{ field, value, page, evidence, confidence, source }]`). Proxied
- * server-side so the browser call is same-origin (no browser→cloud CORS), and
- * so the call can be made in the agent-owning org's context (see AGENT_ORG_ID
- * below) regardless of the signed-in user's own org — same pattern as the
- * `chat` action. Secured with require-adobe-auth.
+ * (`[{ field, value, page, doc_name, confidence }]`). The same `field` name
+ * can appear more than once (e.g. several "risks" bullets) — the frontend
+ * (`PreReadValidation.js`'s `mergeDuplicateFields`) merges those into one
+ * card per field, so no de-duplication happens here. Proxied server-side so
+ * the browser call is same-origin (no browser→cloud CORS), and so the call
+ * can be made in the agent-owning org's context (see AGENT_ORG_ID below)
+ * regardless of the signed-in user's own org — same pattern as the `chat`
+ * action. Secured with require-adobe-auth.
+ *
+ * `limits.timeout` is raised to 300000ms (ext.config.yaml) — the agent's own
+ * document-reading/extraction pass can exceed Adobe I/O Runtime's default
+ * 60s action timeout for larger or multi-document requests, at which point
+ * the platform itself returns a blocking-call "Response not yet ready."
+ * error instead of this action's actual result (same reasoning as
+ * upload-artifact's raised timeout).
  */
 const fetch = require("node-fetch");
 const { Core } = require("@adobe/aio-sdk");

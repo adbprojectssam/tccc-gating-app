@@ -360,6 +360,10 @@ export function mapWorkfrontProject(raw) {
         // field "DE:Build Stage Gate Report?") — drives whether the pre-read
         // side panel shows the summary or the "no pre-read generated" state.
         preReadGenerated: !!g.preReadGenerated,
+        // Whether this gate is registered for a Gate meeting event (from
+        // Workfront field "DE:Gate Meeting Innovation" — empty/absent means
+        // not registered) — drives the header's "Register for Gate N" CTA.
+        gateMeetingRegistered: !!g.gateMeetingRegistered,
         keyMetrics: { title: LABELS.sections.keyMetrics, metrics },
         gateDetail: buildGateDetail(g),
         ioFields,
@@ -375,6 +379,11 @@ export function mapWorkfrontProject(raw) {
   if (!pipelineGates.length) {
     pipelineGates.push({ number: 1, label: 'Gate 1', status: 'current', statusLabel: '' });
     gateData[1] = {
+      // No real gate task exists in Workfront yet for this project, so there's
+      // no task id to submit/register against until one is created.
+      id: null,
+      preReadGenerated: false,
+      gateMeetingRegistered: false,
       keyMetrics: { title: LABELS.sections.keyMetrics, metrics },
       gateDetail: {
         title: 'Gate 1',

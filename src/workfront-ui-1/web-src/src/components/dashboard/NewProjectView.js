@@ -50,12 +50,16 @@ const EMPTY_METRICS = {
 };
 
 /**
- * New-project onboarding dashboard (Figma 1849-100981). Rendered instead of the
- * normal exec dashboard when `project.isNew` is true: empty KPI cards, the
- * fresh gate pipeline, locked IO-fields / approval-trail states, and one of
- * three hero states — upload prompt, the Gate 1 readiness card (`readinessCard`,
- * built by the parent so it's a single implementation shared with the regular
- * exec dashboard), or the "pre-read complete" status card. `onUpload` opens
+ * New-project onboarding dashboard. Rendered instead of the normal exec
+ * dashboard when `project.isNew` is true: empty KPI cards, the fresh gate
+ * pipeline, and one of three hero states — upload prompt (Figma 1849-100981,
+ * full-width above the Gate Pipeline row), or — once artifacts are uploaded —
+ * the Gate 1 readiness card (`readinessCard`, built by the parent so it's a
+ * single implementation shared with the regular exec dashboard) or the
+ * "pre-read complete" status card, both of which sit in the Gate Pipeline
+ * row's main slot instead (Figma 1849-101071 / 1889-122628 / 1932-123418's
+ * "main-gate-detail" — the banner sits next to the pipeline, not above it),
+ * replacing the locked IO-fields/approval-trail placeholders. `onUpload` opens
  * the Artifacts dialog; `preReadSubmitted` flips the Gate 1 sub-label once a
  * pre-read is shared.
  */
@@ -88,21 +92,13 @@ function NewProjectView({
     ],
   };
 
+  const hasHero = !preReadSubmitted && !readinessCard;
+
   return (
     <div className="es-exec">
       <KeyMetrics data={metrics} />
 
-      {preReadSubmitted ? (
-        <GateRegistrationStatusCard
-          facilitatorName={ownerName}
-          artifacts={savedArtifacts}
-          registeredEvent={registeredEvent}
-          onRegister={onRegister}
-          onViewPreRead={onViewPreRead}
-        />
-      ) : readinessCard ? (
-        readinessCard
-      ) : (
+      {hasHero && (
         <section className="es-onboard">
           <div className="es-onboard__info">
             <Badge variant="accent">{O.badge}</Badge>
@@ -129,8 +125,22 @@ function NewProjectView({
       <div className="es-body">
         <GatePipeline data={pipeline} selectedKey={null} />
         <div className="es-body__main">
-          <LockCard title={O.ioTitle} message={O.ioLocked} />
-          <LockCard title={LABELS.sections.approvalTrail} message={O.approvalNotInitialized} />
+          {preReadSubmitted ? (
+            <GateRegistrationStatusCard
+              facilitatorName={ownerName}
+              artifacts={savedArtifacts}
+              registeredEvent={registeredEvent}
+              onRegister={onRegister}
+              onViewPreRead={onViewPreRead}
+            />
+          ) : readinessCard ? (
+            readinessCard
+          ) : (
+            <>
+              <LockCard title={O.ioTitle} message={O.ioLocked} />
+              <LockCard title={LABELS.sections.approvalTrail} message={O.approvalNotInitialized} />
+            </>
+          )}
         </div>
       </div>
     </div>

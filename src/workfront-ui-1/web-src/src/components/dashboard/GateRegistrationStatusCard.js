@@ -35,7 +35,14 @@ function formatEventDate(date) {
  *    with an "Add to calendar" toggle (UI-only — no calendar integration
  *    exists yet, matching how registration itself has no backend persistence).
  */
-function GateRegistrationStatusCard({ facilitatorName, artifacts = [], registeredEvent, onRegister, onViewPreRead }) {
+function GateRegistrationStatusCard({
+  facilitatorName,
+  artifacts = [],
+  registeredEvent,
+  onRegister,
+  onViewPreRead,
+  onViewGateDetails,
+}) {
   const R = LABELS.gateRegistration;
   const [addedToCalendar, setAddedToCalendar] = useState(false);
 
@@ -58,7 +65,7 @@ function GateRegistrationStatusCard({ facilitatorName, artifacts = [], registere
           </p>
 
           <div className="es-gate-registration__actions">
-            <Button variant="primary" fillStyle="fill" onPress={onViewPreRead}>
+            <Button variant="primary" fillStyle="fill" onPress={onViewGateDetails}>
               <Text>{R.viewGateDetails}</Text>
             </Button>
           </div>

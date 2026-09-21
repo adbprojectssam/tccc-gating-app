@@ -73,6 +73,7 @@ function NewProjectView({
   onRegister,
   onViewPreRead,
   readinessCard,
+  mainSlotOverride,
 }) {
   const O = LABELS.onboarding;
   // Once the pre-read is confirmed, the hero banner's Key Metrics row shows
@@ -92,7 +93,7 @@ function NewProjectView({
     ],
   };
 
-  const hasHero = !preReadSubmitted && !readinessCard;
+  const hasHero = !preReadSubmitted && !readinessCard && !mainSlotOverride;
 
   return (
     <div className="es-exec">
@@ -125,7 +126,9 @@ function NewProjectView({
       <div className="es-body">
         <GatePipeline data={pipeline} selectedKey={null} />
         <div className="es-body__main">
-          {preReadSubmitted ? (
+          {mainSlotOverride ? (
+            mainSlotOverride
+          ) : preReadSubmitted ? (
             <GateRegistrationStatusCard
               facilitatorName={ownerName}
               artifacts={savedArtifacts}

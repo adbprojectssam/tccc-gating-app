@@ -329,6 +329,23 @@
 /* ---------- Gate pipeline stepper (marker colors tokenized) ---------- */
 .es-pipeline {
   padding-top: 20px;
+  /* Stays above the pre-read side panel's full-viewport dimming overlay
+     (preReadPanel.css, z-index: 1099) so gates remain switchable while the
+     panel is open — the panel itself is docked to the right and never
+     overlaps this column, so there's no visual conflict from raising it. */
+  position: relative;
+  z-index: 1101;
+}
+
+/* Fades the pipeline itself while the pre-read panel's own overlay is open,
+   so it reads as de-emphasized like the rest of the dashboard even though it
+   sits above that overlay for click-through. A flat black scrim layered on
+   top (tried first) crushed the marker colors/checkmarks into a muddy block;
+   a plain opacity fade (same 0.6 used elsewhere in this file for ineligible
+   .es-ges__row items) keeps its own colors legible instead. */
+.es-pipeline--dimmed {
+  opacity: 0.6;
+  transition: opacity 250ms ease;
 }
 
 .es-pipeline__list {
@@ -1222,21 +1239,27 @@
 }
 
 /* ---------- "Choose a Gate 1 event" registration modal ---------- */
+/* Inline card (Figma "gate-event-selector") — sits in the main gate-detail
+   slot next to Gate Pipeline, NOT a modal/dialog. */
 .es-ges {
   position: relative;
-  padding: 32px;
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 20px 20px 16px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
 }
-.es-ges__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+.es-ges__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .es-ges__title {
   margin: 0;
-  padding-right: 24px;
 }
 .es-ges__subtitle {
   margin: 0;
@@ -1268,11 +1291,52 @@
 }
 .es-ges__tabs {
   display: flex;
+  align-items: center;
+  padding: 4px;
+  background: #f0f0f0;
+  border-radius: 999px;
+}
+.es-ges__tab {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #6b7280;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.es-ges__tab--active {
+  background: #fff;
+  color: #111827;
+  font-weight: 600;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.07);
+}
+.es-ges__tab svg {
+  width: 16px;
+  height: 16px;
+  --iconPrimary: currentColor;
 }
 .es-ges__nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.es-ges__nav-btn {
+  width: 34px !important;
+  height: 34px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+}
+.es-ges__nav-btn svg {
+  width: 14px;
+  height: 14px;
 }
 .es-ges__month {
   font-size: 16px;
@@ -1338,12 +1402,12 @@
 }
 .es-ges__cell--eligible {
   cursor: pointer;
+}
+/* Green border/fill is reserved for the SELECTED day — an eligible-but-
+   unselected day stays neutral (only its dot + bold date signal eligibility). */
+.es-ges__cell--selected {
   border: 1.5px solid #079355;
   background: #f0fdf4;
-}
-.es-ges__cell--selected {
-  border-width: 2px;
-  box-shadow: 0 0 0 1px #079355;
 }
 .es-ges__cell--event:not(.es-ges__cell--eligible) .es-ges__date,
 .es-ges__cell--event:not(.es-ges__cell--eligible) .es-ges__event-name {
@@ -1362,6 +1426,11 @@
   gap: 4px;
   width: 100%;
   min-width: 0;
+}
+/* Figma's in-cell dot is 6px, vs. the legend's 8px — same .es-ges__dot class. */
+.es-ges__event .es-ges__dot {
+  width: 6px;
+  height: 6px;
 }
 .es-ges__event-name {
   font-size: 11px;

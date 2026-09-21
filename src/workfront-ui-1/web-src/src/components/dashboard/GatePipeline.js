@@ -35,12 +35,12 @@ const APPROVED_STATES = new Set(['completed', 'approved']);
  *   - attention        → red outline
  *   - not-started      → gray outline, disabled (not clickable)
  */
-function GatePipeline({ data, selectedKey, onGateSelect }) {
+function GatePipeline({ data, selectedKey, onGateSelect, dimmed }) {
   if (!data) return null;
   const gates = data.gates || [];
 
   return (
-    <nav className="es-pipeline" aria-label={data.title}>
+    <nav className={`es-pipeline${dimmed ? ' es-pipeline--dimmed' : ''}`} aria-label={data.title}>
       {data.title && <h2 className={`es-section-title ${sectionTitle}`}>{data.title}</h2>}
       <ol className="es-pipeline__list">
         {gates.map((gate, index) => {

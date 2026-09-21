@@ -51,6 +51,7 @@ function PreReadSidePanel({
   isOpen,
   onClose,
   projectTitle,
+  gateName,
   preReadGenerated = false,
   preReadSummary,
   onUpdatePreRead,
@@ -90,7 +91,9 @@ function PreReadSidePanel({
 
         <div className="es-preread-panel__header">
           <div className="es-preread-panel__header-row">
-            <h2 className={`es-preread-panel__title ${preReadPanelTitle}`}>{LABELS.preReadPanel.title}</h2>
+            <h2 className={`es-preread-panel__title ${preReadPanelTitle}`}>
+              {formatLabel(LABELS.preReadPanel.title, { gateName: gateName || LABELS.preReadPanel.defaultGateName })}
+            </h2>
             <span className={hasPreRead ? 'es-gate1__version es-gate1__version--active' : 'es-gate1__version'} aria-disabled={!hasPreRead}>
               <Text>{hasPreRead ? LABELS.preReadPanel.currentVersion : LABELS.preReadPanel.versionPlaceholder}</Text>
               <ChevronDown />

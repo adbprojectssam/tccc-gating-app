@@ -9,7 +9,8 @@ import ProjectHeader from './ProjectHeader';
 import NeedAttentionDialog from './NeedAttentionDialog';
 import ArtifactDialog from './ArtifactDialog';
 import PreReadSidePanel from './PreReadSidePanel';
-import GateEventSelectorDialog from './GateEventSelectorDialog';
+import GateEventSelector from './GateEventSelector';
+import GateRegistrationStatusCard from './GateRegistrationStatusCard';
 import NewProjectView from './NewProjectView';
 import KeyMetrics from './KeyMetrics';
 import GatePipeline from './GatePipeline';
@@ -68,10 +69,17 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // the new-project onboarding view to "Pre-read submitted", and swaps the
   // onboarding hero for the "pre-read complete" status card (see below).
   const [preReadSubmitted, setPreReadSubmitted] = useState(false);
-  const [isRegisterOpen, setRegisterOpen] = useState(false);
-  // Set once the user successfully registers for a Gate 1 event — shown as a
-  // confirmation note on the status card.
-  const [registeredEvent, setRegisteredEvent] = useState(null);
+  // True while the inline gate-event selector (Figma 1889-121823 calendar /
+  // 1889-121630 list) is showing in the main gate-detail slot, replacing
+  // whatever else was there — not a modal.
+  const [isRegistering, setRegistering] = useState(false);
+  // Set once the user successfully registers a gate for an event — flips that
+  // gate's main slot to the "registered" status card (Figma 1889-121384 /
+  // 1889-121464) and hides its header "Register" button right away, ahead of
+  // the silent refresh below confirming it server-side. Keyed by gate so
+  // registering one gate doesn't affect any other gate's own state.
+  const [registeredEvents, setRegisteredEvents] = useState({});
+  const registeredEvent = registeredEvents[selectedGate] || null;
   // Drives the loading/error state on the pre-read side panel's "Download"
   // button while the generated pre-read document is being located.
   const [isDownloading, setDownloading] = useState(false);
@@ -93,7 +101,7 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
       return;
     }
     if (id === 'register-gate') {
-      setRegisterOpen(true);
+      setRegistering(true);
       return;
     }
     if (id === 'artifacts') {
@@ -211,9 +219,12 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const baseActions = (project.header.actions || []).filter((a) => !(isNew && a.id === 'need-attention'));
   // Prepended when the selected gate has a real Workfront task that isn't
   // registered for a Gate meeting event yet ("DE:Gate Meeting Innovation" is
-  // empty) — leftmost pill in the header action row.
+  // empty) — leftmost pill in the header action row. `!registeredEvent` is
+  // the optimistic, immediate half of this (this session just registered
+  // it); `!gate.gateMeetingRegistered` is the server-confirmed half, caught
+  // up by the silent refresh onRegistered triggers.
   const registerAction =
-    gate.id && !gate.gateMeetingRegistered
+    gate.id && !gate.gateMeetingRegistered && !registeredEvent
       ? {
           id: 'register-gate',
           label: formatLabel(LABELS.gateRegistration.registerHeaderButton, { number: selectedGate }),
@@ -247,6 +258,49 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
       />
     ) : null;
 
+  // Takes over the main gate-detail slot (next to Gate Pipeline) ahead of
+  // everything else — the event selector while choosing (Figma 1889-121823 /
+  // 1889-121630 / 1889-121287, inline, not a modal), then the "registered"
+  // status card once one's been picked (Figma 1889-121384 / 1889-121464).
+  // Shared between the new-project and regular exec layouts so there's one
+  // implementation of each state.
+  const mainSlotOverride = isRegistering ? (
+    <GateEventSelector
+      registrationLevel={project.registrationLevel}
+      registrationMatchFields={project.registrationMatchFields}
+      taskId={gate.id}
+      onCancel={() => setRegistering(false)}
+      onRegistered={(event) => {
+        setRegisteredEvents((prev) => ({ ...prev, [selectedGate]: event }));
+        setRegistering(false);
+        // Workfront now has "DE:Gate Meeting Innovation" set for this gate's
+        // task — silently re-fetch so gate.gateMeetingRegistered catches up
+        // server-side (the optimistic registeredEvents entry above already
+        // hides this gate's header button in the meantime).
+        if (onProjectRefresh) onProjectRefresh();
+      }}
+    />
+  ) : registeredEvent ? (
+    <GateRegistrationStatusCard
+      facilitatorName={project.ownerName}
+      registeredEvent={registeredEvent}
+      onViewPreRead={() => handleAction('pre-read')}
+      onViewGateDetails={() => {
+        // Dismiss this gate's "just registered" success card so the normal
+        // gate-detail view (Stage/Target/tags/PMO comments) for whichever
+        // gate is currently selected takes over the main slot again. Safe to
+        // drop entirely: gate.gateMeetingRegistered (from the Workfront
+        // refresh above) is what actually keeps the header's Register button
+        // hidden going forward, not this local map.
+        setRegisteredEvents((prev) => {
+          const next = { ...prev };
+          delete next[selectedGate];
+          return next;
+        });
+      }}
+    />
+  ) : null;
+
   return (
     <div className={`es-dashboard ${dashboardBase}`}>
       <ProjectHeader header={header} onAction={handleAction} />
@@ -259,9 +313,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           keyMetrics={gate.keyMetrics}
           ownerName={project.ownerName}
           registeredEvent={registeredEvent}
-          onRegister={() => setRegisterOpen(true)}
+          onRegister={() => setRegistering(true)}
           onViewPreRead={() => handleAction('pre-read')}
           readinessCard={readinessCard}
+          mainSlotOverride={mainSlotOverride}
         />
       ) : (
         <div className="es-exec">
@@ -271,9 +326,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
               data={pipeline}
               selectedKey={selectedGate}
               onGateSelect={handleGateSelect}
+              dimmed={isPreReadPanelOpen}
             />
             <div className="es-body__main">
-              {readinessCard || (
+              {mainSlotOverride || readinessCard || (
                 <>
                   <GateDetailCard gate={gate.gateDetail} />
                   <AIRecommendation data={gate.aiRecommendation} />
@@ -326,6 +382,7 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
         isOpen={isPreReadPanelOpen}
         onClose={() => setPreReadPanelOpen(false)}
         projectTitle={header.title}
+        gateName={gate.gateDetail?.title}
         preReadGenerated={!!gate.preReadGenerated}
         preReadSummary={project.preReadSummary}
         onUpdatePreRead={() => {
@@ -337,21 +394,6 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
         isDownloading={isDownloading}
         downloadError={downloadError}
       />
-
-      <DialogContainer onDismiss={() => setRegisterOpen(false)}>
-        {isRegisterOpen && (
-          <GateEventSelectorDialog
-            registrationLevel={project.registrationLevel}
-            registrationMatchFields={project.registrationMatchFields}
-            taskId={gate.id}
-            onCancel={() => setRegisterOpen(false)}
-            onRegistered={(event) => {
-              setRegisteredEvent(event);
-              setRegisterOpen(false);
-            }}
-          />
-        )}
-      </DialogContainer>
     </div>
   );
 }

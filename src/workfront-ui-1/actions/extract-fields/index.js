@@ -3,41 +3,28 @@
  */
 
 /**
- * extract-fields — server-side proxy to the pre-read extraction agent.
+ * extract-fields — kicks off the pre-read extraction agent call and returns
+ * immediately with a `jobId` (the worker's own OpenWhisk activation id); the
+ * frontend polls `extract-fields-status` for the eventual result.
  *
- * Given a project id and the uploaded Workfront document ids, it calls the
- * Adobe agent, which reads the documents and returns extracted field values
- * (`[{ field, value, page, doc_name, confidence }]`). The same `field` name
- * can appear more than once (e.g. several "risks" bullets) — the frontend
- * (`PreReadValidation.js`'s `mergeDuplicateFields`) merges those into one
- * card per field, so no de-duplication happens here. Proxied server-side so
- * the browser call is same-origin (no browser→cloud CORS), and so the call
- * can be made in the agent-owning org's context (see AGENT_ORG_ID below)
- * regardless of the signed-in user's own org — same pattern as the `chat`
- * action. Secured with require-adobe-auth.
- *
- * `limits.timeout` is raised to 300000ms (ext.config.yaml) — the agent's own
- * document-reading/extraction pass can exceed Adobe I/O Runtime's default
- * 60s action timeout for larger or multi-document requests, at which point
- * the platform itself returns a blocking-call "Response not yet ready."
- * error instead of this action's actual result (same reasoning as
- * upload-artifact's raised timeout).
+ * This does no agent work itself. Adobe I/O Runtime enforces a hard 60s
+ * ceiling on BLOCKING web-action HTTP calls — confirmed against Adobe's own
+ * docs — that `limits.timeout` cannot raise (a higher configured value is
+ * silently ignored for blocking calls), and the agent's document-reading
+ * pass can easily exceed 60s for larger or multi-document requests. So this
+ * action invokes `extract-fields-worker` NON-BLOCKING (which, as a
+ * non-blocking activation, can run up to 3 hours) and returns right away —
+ * well within the 60s window. The result is read back later straight off
+ * that activation's own record (see extract-fields-status) rather than a
+ * separate store. Secured with require-adobe-auth.
  */
-const fetch = require("node-fetch");
+const openwhisk = require("openwhisk");
 const { Core } = require("@adobe/aio-sdk");
 const {
   errorResponse,
   stringParameters,
   checkMissingRequestInputs,
 } = require("../utils");
-const { MOCK_EXTRACTED_FIELDS } = require("./mockExtractedFields");
-
-const EXTRACT_ENDPOINT =
-  "https://agents.automations.adobe.com/api/v3/agents/01a08ef0-5a6f-7003-ac6e-3399920efd31/api";
-
-// The org that OWNS the agent (from the working cURL). The request must be made
-// in this org's context regardless of the signed-in user's own org.
-const AGENT_ORG_ID = "9075A2B154DE8AF80A4C98A7@AdobeOrg";
 
 async function main(params) {
   const logger = Core.Logger("extract-fields", {
@@ -71,40 +58,23 @@ async function main(params) {
     );
     if (!token) return errorResponse(401, "missing IMS token", logger);
 
-    const res = await fetch(EXTRACT_ENDPOINT, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-gw-ims-org-id": AGENT_ORG_ID,
-        "x-headless-integration": "true",
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const ow = openwhisk();
+    const invoked = await ow.actions.invoke({
+      name: "tccc-gating/extract-fields-worker",
+      params: {
+        projectId: params.projectId,
+        documentIds,
+        imsToken: token,
       },
-      body: JSON.stringify({
-        project_id: params.projectId,
-        document_ids: documentIds,
-      }),
+      blocking: false,
     });
-    const body = await res.json().catch(() => null);
-    if (!res.ok) {
-      const detail =
-        (body && (body.error?.message || body.message)) ||
-        `status ${res.status}`;
-      return errorResponse(
-        res.status && res.status >= 400 ? res.status : 502,
-        `Field extraction error: ${detail}`,
-        logger,
-      );
+    const jobId = invoked && invoked.activationId;
+    if (!jobId) {
+      return errorResponse(502, "Could not start the extraction job", logger);
     }
 
-    // The agent returns a bare array of extracted fields; tolerate a { data: [] }
-    // wrapper too.
-    const fields = Array.isArray(body) ? body : (body && body.data) || [];
-    if (fields.length === 0) {
-      logger.info("Empty extraction result — falling back to mock data");
-    }
-    const resultFields = fields.length > 0 ? fields : MOCK_EXTRACTED_FIELDS;
-    return { statusCode: 200, body: { data: resultFields } };
+    logger.info(`Started extraction job ${jobId}`);
+    return { statusCode: 200, body: { data: { jobId } } };
   } catch (error) {
     logger.error(error);
     const detail = error && error.message ? error.message : "server error";

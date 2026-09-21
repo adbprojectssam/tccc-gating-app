@@ -165,7 +165,8 @@ export const LABELS = {
   // Pre-read side panel — opened from "View pre-read" on the Gate 1 readiness
   // card. Read-only summary of the business case pulled from the source docs.
   preReadPanel: {
-    title: 'Pre-read - Gate 1: Concept',
+    title: 'Pre-read - {gateName}',
+    defaultGateName: 'Gate 1',
     versionPlaceholder: 'No versions yet',
     currentVersion: 'Version 2 (Current)',
     sharedNotice: 'Shared with {facilitator} (Gate 1 facilitator) · All fields confirmed.',

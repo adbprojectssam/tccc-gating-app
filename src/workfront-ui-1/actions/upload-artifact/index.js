@@ -47,10 +47,42 @@ const EXTENSION_CONTENT_TYPES = {
   gif: "image/gif",
 };
 
+const CONTENT_TYPE_EXTENSIONS = Object.fromEntries(
+  Object.entries(EXTENSION_CONTENT_TYPES).map(([ext, type]) => [type, ext]),
+);
+// Prefer docx/xlsx/pptx when several Office types share a family.
+CONTENT_TYPE_EXTENSIONS["image/jpg"] = "jpg";
+
 /** Extension of `fileName` (lowercased, no dot), or '' if it has none. */
 function extensionOf(fileName) {
   const m = /\.([a-z0-9]+)$/i.exec(String(fileName || ""));
   return m ? m[1].toLowerCase() : "";
+}
+
+/**
+ * Resolve a usable extension for Workfront preview. Empty `ext` is a common
+ * reason uploads succeed but the UI never generates a preview.
+ */
+function resolveExtension(fileName, browserContentType) {
+  const fromName = extensionOf(fileName);
+  if (fromName) return fromName;
+  const type = String(browserContentType || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  return CONTENT_TYPE_EXTENSIONS[type] || "";
+}
+
+/**
+ * Ensure the stored file name ends with `.${ext}` so Workfront version
+ * metadata matches the binary type.
+ */
+function resolveFileName(fileName, ext) {
+  const name = String(fileName || "upload").trim() || "upload";
+  if (!ext) return name;
+  if (extensionOf(name) === ext) return name;
+  if (extensionOf(name)) return name; // keep caller extension if already present
+  return `${name}.${ext}`;
 }
 
 /**
@@ -137,16 +169,29 @@ async function main(params) {
       );
     }
 
-    const resolvedContentType = resolveContentType(fileName, contentType);
+    const ext = resolveExtension(fileName, contentType);
+    if (!ext) {
+      return errorResponse(
+        400,
+        "fileName must include a known extension (e.g. .pdf, .docx) so Workfront can generate a preview",
+        logger,
+      );
+    }
+    const resolvedFileName = resolveFileName(fileName, ext);
+    const resolvedContentType = resolveContentType(
+      resolvedFileName,
+      contentType,
+    );
     logger.debug(
-      `Uploading ${fileName} — ${buffer.length} bytes, contentType=${resolvedContentType} (browser sent "${contentType}")`,
+      `Uploading ${resolvedFileName} — ${buffer.length} bytes, ext=${ext}, contentType=${resolvedContentType} (browser sent "${contentType}")`,
     );
 
     // 1) Upload the bytes → handle.
     const form = new FormData();
     form.append("uploadedFile", buffer, {
-      filename: fileName,
+      filename: resolvedFileName,
       contentType: resolvedContentType,
+      knownLength: buffer.length,
     });
     const uploadUrl =
       `https://${hostname}/attask/api/${API_VERSION}/upload` +
@@ -168,26 +213,25 @@ async function main(params) {
         logger,
       );
     }
-    logger.debug(`Upload step succeeded — handle=${handle}`);
+    logger.info(`Upload step succeeded — handle=${handle}`);
 
-    // 2) Create the document attached to the project. Per Workfront's
-    // documented upload flow, this is a JSON object passed via `updates=`
-    // (not flat query params) — critically including `currentVersion`
-    // (version + fileName + ext), which the earlier flat-param version of
-    // this call omitted entirely. Workfront's preview generation keys off
-    // this version metadata, not just the document's own `name` — omitting
-    // it is why uploads succeeded but previews never rendered.
+    // 2) Create the document attached to the project.
+    // Workfront preview generation needs currentVersion with fileName + ext
+    // (and the same handle). Omitting this is why upload can succeed while
+    // the UI never shows a preview.
     const updates = {
-      name: fileName,
+      name: resolvedFileName,
       handle,
       docObjCode: "PROJ",
       objID: projectId,
       currentVersion: {
-        version: "1",
-        fileName,
-        ext: extensionOf(fileName),
+        version: "1.0",
+        fileName: resolvedFileName,
+        ext,
+        handle,
       },
     };
+    logger.debug(`Document create updates=${JSON.stringify(updates)}`);
     const docParams = new URLSearchParams({
       apiKey: WORKFRONT_API_KEY,
       updates: JSON.stringify(updates),
@@ -203,6 +247,7 @@ async function main(params) {
       const detail =
         (docBody && docBody.error && docBody.error.message) ||
         `status ${docRes.status}`;
+      logger.error(`Document create failed — body=${JSON.stringify(docBody)}`);
       return errorResponse(
         docRes.status && docRes.status >= 400 ? docRes.status : 502,
         `Workfront document create error: ${detail}`,
@@ -210,9 +255,19 @@ async function main(params) {
       );
     }
 
+    logger.info(
+      `Document created — id=${doc.ID}, name=${doc.name || resolvedFileName}, ext=${ext}`,
+    );
     return {
       statusCode: 200,
-      body: { data: { id: doc.ID, name: doc.name || fileName } },
+      body: {
+        data: {
+          id: doc.ID,
+          name: doc.name || resolvedFileName,
+          ext,
+          contentType: resolvedContentType,
+        },
+      },
     };
   } catch (error) {
     logger.error(error);

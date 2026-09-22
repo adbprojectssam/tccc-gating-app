@@ -1,3 +1,5 @@
+/* global FileReader */
+
 /*
  * <license header>
  */
@@ -35,31 +37,97 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Base64 expands the raw file by roughly 4/3; keep the encoded value below
+// the action's 900,000-character safety ceiling.
+const MAX_DIRECT_UPLOAD_BYTES = 650_000;
+const MAX_UPLOAD_BYTES = 300 * 1024 * 1024;
+const UPLOAD_POLL_INTERVAL_MS = 2000;
+const UPLOAD_POLL_TIMEOUT_MS = 31 * 60 * 1000;
+
 /**
  * Upload a file to Workfront (attached to the project). Resolves to the created
  * document `{ id, name }`. Throws on error.
  *
- * The file is base64-encoded and sent in the action body; the `upload-artifact`
- * action decodes it and pushes it to Workfront. NOTE: Adobe I/O Runtime caps the
- * request payload (~1 MB), so only small files go through this direct path.
+ * Small files are sent directly as base64 through the runtime action because the
+ * browser-to-action payload stays within the App Builder JSON limits. Larger files
+ * are first staged in App Builder Files storage via a presigned URL, and the
+ * action then reads the staged file and streams it to Workfront.
  */
 export async function uploadArtifact({ projectId, hostname, imsToken, imsOrg, file }) {
   const actionUrl = resolveUrl('upload-artifact');
   if (!actionUrl) throw new Error('upload-artifact action is not configured — build the app');
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error('Files must be 300 MB or smaller');
 
-  const fileBase64 = await blobToBase64(file);
+  if (file.size <= MAX_DIRECT_UPLOAD_BYTES) {
+    const fileBase64 = await blobToBase64(file);
+    const result = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
+      projectId,
+      hostname,
+      fileName: file.name,
+      contentType: file.type,
+      fileBase64,
+    });
+    if (!result || result.error || !result.data) {
+      const detail = (result && result.error && (result.error.error || result.error)) || 'unknown error';
+      throw new Error(`Upload failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+    }
+    return result.data;
+  }
+
+  const prepared = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
+    mode: 'prepare',
+    projectId,
+    hostname,
+    fileName: file.name,
+    contentType: file.type,
+    size: file.size,
+  });
+  if (!prepared || prepared.error || !prepared.data || !prepared.data.uploadUrl) {
+    const detail = (prepared && prepared.error && (prepared.error.error || prepared.error)) || 'unknown error';
+    throw new Error(`Large upload setup failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+  }
+
+  const { uploadUrl } = prepared.data;
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream',
+      'x-ms-blob-type': 'BlockBlob',
+    },
+    body: file,
+  });
+  if (!response.ok) {
+    throw new Error(`Large file staging failed (${response.status})`);
+  }
+
   const result = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
     projectId,
     hostname,
     fileName: file.name,
     contentType: file.type,
-    fileBase64,
+    fileUrl: uploadUrl,
+    size: file.size,
+    mode: 'finalize',
   });
-  if (!result || result.error || !result.data) {
+  if (!result || result.error || !result.data || !result.data.jobId) {
     const detail = (result && result.error && (result.error.error || result.error)) || 'unknown error';
     throw new Error(`Upload failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
   }
-  return result.data;
+
+  const statusUrl = resolveUrl('upload-artifact-status');
+  if (!statusUrl) throw new Error('upload-artifact-status action is not configured — build the app');
+  const deadline = Date.now() + UPLOAD_POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await delay(UPLOAD_POLL_INTERVAL_MS);
+    const poll = await actionWebInvoke(statusUrl, authHeaders(imsToken, imsOrg), { jobId: result.data.jobId });
+    if (!poll || poll.error || !poll.data) {
+      const detail = (poll && poll.error && (poll.error.error || poll.error)) || 'unknown error';
+      throw new Error(`Upload failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+    }
+    if (poll.data.status === 'done') return poll.data.data;
+    if (poll.data.status === 'error') throw new Error(poll.data.error || 'Upload failed');
+  }
+  throw new Error('Upload is taking longer than expected. Please try again.');
 }
 
 // Polling cadence + overall budget for extract-fields-status. Adobe I/O

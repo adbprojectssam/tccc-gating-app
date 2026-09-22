@@ -28,16 +28,29 @@ const {
 const API_VERSION = "v22.0";
 
 // Fields fetched for each individual Gate task.
+// const TASK_FIELDS = [
+//   "name",
+//   "status",
+//   "parent:name",
+//   "assignedToID",
+//   "DE:PMO Comments",
+//   "actualCompletionDate",
+//   "plannedCompletionDate",
+//   "DE:Gate Meeting Innovation",
+//   "DE:Build Stage Gate Report?",
+// ].join(",");
 const TASK_FIELDS = [
+  "ID",
   "name",
   "status",
   "parent:name",
   "assignedToID",
+  "DE:Gate Status",
   "DE:PMO Comments",
   "actualCompletionDate",
   "plannedCompletionDate",
   "DE:Gate Meeting Innovation",
-  "DE:Build Stage Gate Report?"
+  "DE:Build Stage Gate Report?",
 ].join(",");
 
 /**
@@ -169,8 +182,12 @@ async function main(params) {
         pmoComments: details?.["DE:PMO Comments"] || null,
         actualCompletionDate: details?.actualCompletionDate || null,
         plannedCompletionDate: details?.plannedCompletionDate || null,
-        preReadGenerated: details?.["DE:Build Stage Gate Report?"]?.toLowerCase() === 'report built' || false,
-        gateMeetingRegistered: !!(details && details["DE:Gate Meeting Innovation"]),
+        preReadGenerated:
+          details?.["DE:Build Stage Gate Report?"]?.toLowerCase() ===
+            "report built" || false,
+        gateMeetingRegistered: !!(
+          details && details["DE:Gate Meeting Innovation"]
+        ),
       });
       if (!completed) break;
     }

@@ -17,7 +17,9 @@
  */
 const fetch = require("node-fetch");
 const FormData = require("form-data");
+const openwhisk = require("openwhisk");
 const { Core } = require("@adobe/aio-sdk");
+const filesLib = require("@adobe/aio-lib-files");
 const {
   errorResponse,
   stringParameters,
@@ -98,13 +100,79 @@ function resolveContentType(fileName, browserContentType) {
   );
 }
 
-// Conservative ceiling for the base64-encoded file, comfortably under Adobe
-// I/O Runtime's ~1MB web-action request size limit once the JSON envelope
-// (fileName/contentType/projectId/hostname keys, plus base64's own ~33%
-// inflation over raw bytes) is accounted for. Above this, the request risks
-// silent failure/corruption rather than a clean error — better to reject it
-// here with an actionable message.
+// Adobe App Builder web actions are limited to comparatively small JSON payloads,
+// so the direct file-in-JSON path is only for small documents. Large files are
+// staged in App Builder Files storage via a presigned URL and then streamed to
+// Workfront by the runtime action, which avoids the 1 MB request-body ceiling.
 const MAX_BASE64_LENGTH = 900_000; // ~660KB raw
+
+async function prepareLargeUpload(fileName, contentType, size) {
+  const files = await filesLib.init();
+  const safeName = String(fileName || "upload.bin")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "upload.bin";
+  const storagePath = `tmp/workfront-upload/${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}-${safeName}`;
+  const uploadUrl = await files.generatePresignURL(storagePath, {
+    expiryInSeconds: 3600,
+    permissions: "rwd",
+    urlType: filesLib.UrlType.external,
+  });
+
+  return {
+    storagePath,
+    uploadUrl,
+    size,
+    contentType: contentType || "application/octet-stream",
+  };
+}
+
+async function resolveUploadBuffer(params) {
+  const { fileBase64, fileUrl, storagePath, fileName } = params;
+
+  if (fileUrl) {
+    const stagedUrl = new URL(String(fileUrl));
+    if (
+      stagedUrl.protocol !== "https:" ||
+      stagedUrl.hostname !== "firefly.azureedge.net"
+    ) {
+      throw new Error("Invalid staged file URL");
+    }
+    const response = await fetch(stagedUrl.toString(), { method: "GET" });
+    if (!response.ok) {
+      throw new Error(`failed to fetch staged file (${response.status})`);
+    }
+    return {
+      buffer: Buffer.from(await response.arrayBuffer()),
+      fileName: fileName || "upload.bin",
+    };
+  }
+
+  if (storagePath) {
+    const files = await filesLib.init();
+    const buffer = await files.read(String(storagePath));
+    return {
+      buffer,
+      fileName: fileName || String(storagePath).split("/").pop() || "upload.bin",
+    };
+  }
+
+  if (fileBase64) {
+    const base64 = String(fileBase64);
+    if (base64.length > MAX_BASE64_LENGTH) {
+      throw new Error(
+        "File exceeds the direct App Builder request limit. Upload it to App Builder Files first and retry using the staged upload flow.",
+      );
+    }
+    return {
+      buffer: Buffer.from(base64, "base64"),
+      fileName: fileName || "upload.bin",
+    };
+  }
+
+  throw new Error("No upload payload was supplied");
+}
 
 /** SSRF guard — only proxy to trusted Workfront hosts (see get-project). */
 function isAllowedHost(hostname, allowed) {
@@ -118,19 +186,88 @@ function isAllowedHost(hostname, allowed) {
   return list.some((h) => hostname === h || hostname.endsWith(`.${h}`));
 }
 
+function isValidStagedFileUrl(fileUrl) {
+  try {
+    const url = new URL(String(fileUrl));
+    return url.protocol === "https:" && url.hostname === "firefly.azureedge.net";
+  } catch (_) {
+    return false;
+  }
+}
+
 async function main(params) {
   const logger = Core.Logger("upload-artifact", {
     level: params.LOG_LEVEL || "info",
   });
   try {
     logger.info("Calling the upload-artifact action");
-    logger.debug(stringParameters(params));
-
-    const errorMessage = checkMissingRequestInputs(
-      params,
-      ["hostname", "projectId", "fileName", "fileBase64"],
-      [],
+    logger.debug(
+      stringParameters({
+        ...params,
+        fileBase64: params.fileBase64 ? "<hidden>" : undefined,
+        fileUrl: params.fileUrl ? "<hidden>" : undefined,
+      }),
     );
+
+    const mode = String(params.mode || "upload").toLowerCase();
+
+    if (mode === "prepare") {
+      const { fileName, contentType, size } = params;
+      if (!fileName) {
+        return errorResponse(400, "fileName is required for staged uploads", logger);
+      }
+      const staged = await prepareLargeUpload(fileName, contentType, size || 0);
+      return {
+        statusCode: 200,
+        body: {
+          data: {
+            uploadUrl: staged.uploadUrl,
+            contentType: staged.contentType,
+            size: staged.size,
+          },
+        },
+      };
+    }
+
+    if (mode === "finalize" && params.fileUrl) {
+      const errorMessage = checkMissingRequestInputs(
+        params,
+        ["hostname", "projectId", "fileName", "fileUrl"],
+        [],
+      );
+      if (errorMessage) return errorResponse(400, errorMessage, logger);
+      if (!isAllowedHost(params.hostname, params.WORKFRONT_ALLOWED_HOSTS)) {
+        return errorResponse(400, `host not allowed: ${params.hostname}`, logger);
+      }
+      if (!isValidStagedFileUrl(params.fileUrl)) {
+        return errorResponse(400, "Invalid staged file URL", logger);
+      }
+
+      const ow = openwhisk();
+      const invoked = await ow.actions.invoke({
+        name: "tccc-gating/upload-artifact-worker",
+        params: {
+          hostname: params.hostname,
+          projectId: params.projectId,
+          fileName: params.fileName,
+          contentType: params.contentType,
+          fileUrl: params.fileUrl,
+          size: params.size,
+        },
+        blocking: false,
+      });
+      const jobId = invoked && invoked.activationId;
+      if (!jobId) {
+        return errorResponse(502, "Could not start the upload job", logger);
+      }
+      return { statusCode: 202, body: { data: { jobId } } };
+    }
+
+    const required = ["hostname", "projectId", "fileName"];
+    if (!params.storagePath && !params.fileBase64 && !params.fileUrl) {
+      required.push("fileBase64");
+    }
+    const errorMessage = checkMissingRequestInputs(params, required, []);
     if (errorMessage) return errorResponse(400, errorMessage, logger);
 
     const {
@@ -139,6 +276,8 @@ async function main(params) {
       fileName,
       contentType,
       fileBase64,
+      fileUrl,
+      storagePath,
       WORKFRONT_API_KEY,
       WORKFRONT_ALLOWED_HOSTS,
     } = params;
@@ -148,25 +287,31 @@ async function main(params) {
       return errorResponse(400, `host not allowed: ${hostname}`, logger);
     }
 
-    if (String(fileBase64).length > MAX_BASE64_LENGTH) {
-      return errorResponse(
-        400,
-        "File is too large for direct upload (max ~660KB) — please use a smaller file.",
-        logger,
-      );
-    }
-
-    const buffer = Buffer.from(String(fileBase64), "base64");
-    if (!buffer.length) {
+    const payload = await resolveUploadBuffer({
+      fileBase64,
+      fileUrl,
+      storagePath,
+      fileName,
+    });
+    const buffer = payload.buffer;
+    if (!buffer || !buffer.length) {
       return errorResponse(400, "Uploaded file was empty", logger);
+    }
+    const directLength = String(fileBase64 || "").length;
+    if (directLength > MAX_BASE64_LENGTH) {
+      logger.warn(
+        `Direct upload invoked with ${directLength} base64 chars; large-file staged flow should be used instead.`,
+      );
     }
     // Sanity-check the decode against the input length — catches silent
     // truncation upstream (proxy/gateway) rather than a clean rejection.
-    const expectedLength = Math.floor((String(fileBase64).length * 3) / 4);
-    if (Math.abs(buffer.length - expectedLength) > 4) {
-      logger.warn(
-        `Decoded buffer length (${buffer.length}) doesn't match the expected length from the base64 input (~${expectedLength}) — the upload may have been truncated in transit.`,
-      );
+    if (fileBase64) {
+      const expectedLength = Math.floor((String(fileBase64).length * 3) / 4);
+      if (Math.abs(buffer.length - expectedLength) > 4) {
+        logger.warn(
+          `Decoded buffer length (${buffer.length}) doesn't match the expected length from the base64 input (~${expectedLength}) — the upload may have been truncated in transit.`,
+        );
+      }
     }
 
     const ext = resolveExtension(fileName, contentType);
@@ -258,6 +403,22 @@ async function main(params) {
     logger.info(
       `Document created — id=${doc.ID}, name=${doc.name || resolvedFileName}, ext=${ext}`,
     );
+
+    if (fileUrl) {
+      try {
+        await fetch(String(fileUrl), { method: "DELETE" });
+      } catch (cleanupError) {
+        logger.warn(`could not clean up staged upload URL: ${cleanupError.message}`);
+      }
+    } else if (storagePath) {
+      try {
+        const files = await filesLib.init();
+        await files.delete(String(storagePath));
+      } catch (cleanupError) {
+        logger.warn(`could not clean up staged upload ${storagePath}: ${cleanupError.message}`);
+      }
+    }
+
     return {
       statusCode: 200,
       body: {

@@ -30,6 +30,25 @@ runtimeManifest:
           annotations:
             require-adobe-auth: true
             final: true
+        upload-artifact-worker:
+          function: actions/upload-artifact-worker/index.js
+          runtime: nodejs:18
+          limits:
+            timeout: 1800000
+            memory: 1024
+          inputs:
+            LOG_LEVEL: info
+            WORKFRONT_API_KEY: $WORKFRONT_API_KEY
+            WORKFRONT_ALLOWED_HOSTS: $WORKFRONT_ALLOWED_HOSTS
+        upload-artifact-status:
+          function: actions/upload-artifact-status/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+          annotations:
+            require-adobe-auth: true
+            final: true
         delete-artifact:
           function: actions/delete-artifact/index.js
           web: 'yes'

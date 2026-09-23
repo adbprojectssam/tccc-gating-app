@@ -3,49 +3,50 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, ActionButton, ProgressCircle, Text } from '@react-spectrum/s2';
+import { Button, DateRangePicker, Picker, PickerItem, ProgressCircle, SearchField, Text } from '@react-spectrum/s2';
 import AlertDiamond from '@react-spectrum/s2/icons/AlertDiamond';
-import Checkmark from '@react-spectrum/s2/icons/Checkmark';
 import CalendarIcon from '@react-spectrum/s2/icons/Calendar';
-import ListBulleted from '@react-spectrum/s2/icons/ListBulleted';
 import ChevronLeft from '@react-spectrum/s2/icons/ChevronLeft';
 import ChevronRight from '@react-spectrum/s2/icons/ChevronRight';
+import { today } from '@internationalized/date';
 import { LABELS, formatLabel } from '../../constants/labels';
 import { getImsAuth } from '../../api/imsAuth';
-import { fetchGateEvents, registerForGateEvent } from '../../api/gateEventsClient';
+import { registerForGateEvent } from '../../api/gateEventsClient';
 import { dialogTitle, dialogDesc, bannerBody } from './styles';
 
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const WEEKDAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
 const LEVEL_LABEL = { OU: LABELS.tags.ou, Category: LABELS.tags.category, Country: LABELS.tags.country };
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const RESULTS_PER_PAGE = 5;
+
+function defaultDateRange() {
+  const currentDate = today('UTC');
+  return {
+    start: currentDate.subtract({ months: 3 }),
+    end: currentDate.add({ months: 3 }),
+  };
+}
+
+function isWithinDateRange(date, range) {
+  if (!range || !date) return true;
+  const value = date.toISOString().slice(0, 10);
+  return value >= range.start.toString() && value <= range.end.toString();
+}
+
+function buildMonthGrid(year, month) {
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = Array(firstWeekday).fill(null);
+  for (let day = 1; day <= daysInMonth; day += 1) cells.push(day);
+  while (cells.length % 7) cells.push(null);
+  return Array.from({ length: cells.length / 7 }, (_, index) => cells.slice(index * 7, index * 7 + 7));
+}
 
 /** "Oct 15, 2026". */
 function formatEventDate(date) {
   if (!date) return '';
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-
-/** Monday-first month grid: array of weeks, each 7 entries (day-of-month or null). */
-function buildMonthGrid(year, month) {
-  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0..Sun=6
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells = [];
-  for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
-  while (cells.length % 7 !== 0) cells.push(null);
-  const weeks = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-  return weeks;
-}
-
-// Meeting's "DE:What level is your Gate Meeting?" value → which project-side
-// field (from `registrationMatchFields`) that level's own value is checked
-// against. Matches the product rule: OU↔Operating Unit, Country↔Leading
-// Market vs. the meeting's Primary Launch Market Country, Category↔Global
-// Category — independent of whichever single level this project would show
-// in its own subtitle (`registrationLevel`).
-const LEVEL_MATCH_KEY = { OU: 'operatingUnit', Country: 'leadingMarket', Category: 'category' };
 
 /**
  * "Choose a Gate N event" selector (Figma 1889-121823 calendar / 1889-121630
@@ -59,99 +60,50 @@ const LEVEL_MATCH_KEY = { OU: 'operatingUnit', Country: 'leadingMarket', Categor
  *  - the project field matching the meeting's OWN declared level (OU/Country/
  *    Category — see LEVEL_MATCH_KEY) equals that meeting's level value.
  */
-function GateEventSelector({ registrationLevel, registrationMatchFields, taskId, onCancel, onRegistered }) {
-  const [status, setStatus] = useState('loading'); // loading | ready | error
-  const [error, setError] = useState('');
-  const [events, setEvents] = useState([]);
-  const [activeTab, setActiveTab] = useState('calendar'); // calendar | list
-  const [viewYear, setViewYear] = useState(null);
-  const [viewMonth, setViewMonth] = useState(null); // 0-11
+function GateEventSelector({ gateNumber = '1', registrationLevel, registrationMatchFields, taskId, meetings = [], meetingsLoading = false, meetingsError = '', onCancel, onRegistered }) {
+  const events = meetings;
+  const status = meetingsLoading ? 'loading' : meetingsError ? 'error' : 'ready';
+  const error = meetingsError;
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [search, setSearch] = useState('');
+  const [eventFilter, setEventFilter] = useState('all');
+  const [gateFilter, setGateFilter] = useState('all');
+  const [dateRange, setDateRange] = useState(defaultDateRange);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [calendarMonth, setCalendarMonth] = useState(null);
   const [registering, setRegistering] = useState(false);
   const [registerError, setRegisterError] = useState('');
-  const ctxRef = useRef(null);
-
-  const isEligible = (e) => {
-    const f = registrationMatchFields;
-    if (!f || !f.initiativeType) return false;
-    if (!(e.initiativeTypes || []).includes(f.initiativeType)) return false;
-    const matchKey = LEVEL_MATCH_KEY[e.level];
-    if (!matchKey) return false;
-    const projectValue = f[matchKey];
-    return !!projectValue && e.levelValue === projectValue;
-  };
+  const tableRef = useRef(null);
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const ctx = await getImsAuth();
-        ctxRef.current = ctx;
-        const list = await fetchGateEvents({ hostname: ctx.hostname, imsToken: ctx.imsToken, imsOrg: ctx.imsOrg });
-        if (!active) return;
-        setEvents(list);
-        const eligible = list.filter(isEligible);
-        const earliest = (eligible.length ? eligible : list).reduce(
-          (min, e) => (!min || e.date < min.date ? e : min),
-          null,
-        );
-        const base = earliest ? earliest.date : new Date();
-        setViewYear(base.getFullYear());
-        setViewMonth(base.getMonth());
-        setStatus('ready');
-      } catch (e) {
-        if (!active) return;
-        setError(e.message);
-        setStatus('error');
-      }
-    })();
-    return () => {
-      active = false;
-    };
-    // registrationMatchFields is fixed for this card's lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!calendarMonth && events.length) {
+      const firstMeetingDate = events[0].date || new Date();
+      setCalendarMonth(new Date(firstMeetingDate.getFullYear(), firstMeetingDate.getMonth(), 1));
+    }
+  }, [calendarMonth, events]);
 
-  const eligibleCount = useMemo(() => events.filter(isEligible).length, [events, registrationMatchFields]);
   const selectedEvent = events.find((e) => e.id === selectedId) || null;
 
   const selectEvent = (e) => {
-    if (!isEligible(e)) return;
     setRegisterError('');
     setSelectedId((prev) => (prev === e.id ? null : e.id));
   };
 
-  const goPrevMonth = () =>
-    setViewMonth((m) => {
-      if (m === 0) {
-        setViewYear((y) => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
-  const goNextMonth = () =>
-    setViewMonth((m) => {
-      if (m === 11) {
-        setViewYear((y) => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
-
-  const handleRegister = async () => {
-    if (!selectedEvent) return;
+  const handleRegister = async (event = selectedEvent) => {
+    if (!event) return;
     setRegistering(true);
     setRegisterError('');
     try {
-      const ctx = ctxRef.current || (await getImsAuth());
+      const ctx = await getImsAuth();
       await registerForGateEvent({
         hostname: ctx.hostname,
         taskId,
-        gateEventId: selectedEvent.id,
+        gateEventId: event.id,
         imsToken: ctx.imsToken,
         imsOrg: ctx.imsOrg,
       });
-      onRegistered && onRegistered(selectedEvent);
+      onRegistered && onRegistered(event);
     } catch (e) {
       setRegisterError(e.message);
     } finally {
@@ -159,18 +111,58 @@ function GateEventSelector({ registrationLevel, registrationMatchFields, taskId,
     }
   };
 
-  const weeks = useMemo(() => (viewYear != null ? buildMonthGrid(viewYear, viewMonth) : []), [viewYear, viewMonth]);
-  const eventsByDay = useMemo(() => {
-    const map = {};
-    events.forEach((e) => {
-      if (viewYear != null && e.date.getFullYear() === viewYear && e.date.getMonth() === viewMonth) {
-        const d = e.date.getDate();
-        (map[d] = map[d] || []).push(e);
-      }
-    });
-    return map;
-  }, [events, viewYear, viewMonth]);
-  const sortedEvents = useMemo(() => events.slice().sort((a, b) => a.date - b.date), [events]);
+  const eventOptions = useMemo(() => [...new Set(events.map((event) => event.name))], [events]);
+  const gateOptions = useMemo(() => [...new Set(events.map((event) => event.level).filter(Boolean))], [events]);
+  const filteredEvents = useMemo(() => events
+    .filter((event) => !search || `${event.name} ${event.levelValue || ''}`.toLowerCase().includes(search.toLowerCase()))
+    .filter((event) => eventFilter === 'all' || event.name === eventFilter)
+    .filter((event) => gateFilter === 'all' || event.level === gateFilter)
+    .filter((event) => isWithinDateRange(event.date, dateRange))
+    .sort((a, b) => a.date - b.date), [events, search, eventFilter, gateFilter, dateRange]);
+  const pageCount = Math.ceil(filteredEvents.length / RESULTS_PER_PAGE);
+  const visibleEvents = filteredEvents.slice(
+    (currentPage - 1) * RESULTS_PER_PAGE,
+    currentPage * RESULTS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, eventFilter, gateFilter, dateRange]);
+
+  useEffect(() => {
+    if (currentPage > pageCount && pageCount > 0) setCurrentPage(pageCount);
+  }, [currentPage, pageCount]);
+
+  useEffect(() => {
+    if (!selectedId || !tableRef.current) return;
+    const row = tableRef.current.querySelector(`[data-event-id="${selectedId}"]`);
+    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [selectedId, currentPage]);
+
+  const calendarMonths = useMemo(() => {
+    if (!calendarMonth) return [];
+    return [0, 1, 2].map((offset) => new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + offset, 1));
+  }, [calendarMonth]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setEventFilter('all');
+    setGateFilter('all');
+    setDateRange(defaultDateRange());
+  };
+
+  const pageNumbers = Array.from({ length: pageCount }, (_, index) => index + 1);
+
+  const selectDate = (date, month) => {
+    if (!date) return;
+    const day = new Date(month.getFullYear(), month.getMonth(), date);
+    const firstMeetingIndex = filteredEvents.findIndex((event) => event.date.toDateString() === day.toDateString());
+    if (firstMeetingIndex < 0) return;
+    const firstMeeting = filteredEvents[firstMeetingIndex];
+    setSelectedDate(day.toDateString());
+    setSelectedId(firstMeeting.id);
+    setCurrentPage(Math.floor(firstMeetingIndex / RESULTS_PER_PAGE) + 1);
+  };
 
   const R = LABELS.gateRegistration;
   const subtitle = registrationLevel
@@ -180,8 +172,14 @@ function GateEventSelector({ registrationLevel, registrationMatchFields, taskId,
   return (
     <section className="es-ges">
       <div className="es-ges__header">
-        <h2 className={`es-ges__title ${dialogTitle}`}>{R.modalTitle}</h2>
-        <p className={`es-ges__subtitle ${dialogDesc}`}>{subtitle}</p>
+        <div className="es-ges__title-row">
+          <button type="button" className="es-ges__back" aria-label={R.back} onClick={onCancel}>
+            <ChevronLeft />
+            <span>{R.back}</span>
+          </button>
+          <h1 className={`es-ges__title ${dialogTitle}`}>{R.upcomingTitle}</h1>
+        </div>
+        <p className={`es-ges__subtitle ${dialogDesc}`}>{R.upcomingSubtitle}</p>
       </div>
 
       {status === 'loading' && (
@@ -204,142 +202,113 @@ function GateEventSelector({ registrationLevel, registrationMatchFields, taskId,
 
       {status === 'ready' && events.length > 0 && (
         <>
-          <div className="es-ges__tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'calendar'}
-              className={`es-ges__tab ${activeTab === 'calendar' ? 'es-ges__tab--active' : ''}`}
-              onClick={() => setActiveTab('calendar')}
-            >
-              <CalendarIcon />
-              <span>{R.tabCalendar}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'list'}
-              className={`es-ges__tab ${activeTab === 'list' ? 'es-ges__tab--active' : ''}`}
-              onClick={() => setActiveTab('list')}
-            >
-              <ListBulleted />
-              <span>{R.tabList}</span>
-            </button>
+          <div className="es-ges__filters">
+            <SearchField aria-label={R.search} placeholder={R.search} value={search} onChange={setSearch} />
+            <Picker aria-label={R.eventFilter} selectedKey={eventFilter} onSelectionChange={setEventFilter}>
+              <PickerItem id="all">{R.allEvents}</PickerItem>
+              {eventOptions.map((name) => <PickerItem key={name} id={name}>{name}</PickerItem>)}
+            </Picker>
+            <Picker aria-label={R.gateFilter} selectedKey={gateFilter} onSelectionChange={setGateFilter}>
+              <PickerItem id="all">{R.allGates}</PickerItem>
+              {gateOptions.map((level) => <PickerItem key={level} id={level}>{LEVEL_LABEL[level] || level}</PickerItem>)}
+            </Picker>
+            <DateRangePicker
+              aria-label={R.dateFilter}
+              value={dateRange}
+              onChange={setDateRange}
+              size="M"
+            />
+            <button type="button" className="es-ges__clear-filters" onClick={clearFilters}>{R.clearFilters}</button>
           </div>
-
-          {registrationLevel && eligibleCount === 0 && (
-            <div className={`es-ges__hint ${dialogDesc}`}>{R.noEligible}</div>
+          <div className="es-ges__table-wrap" ref={tableRef}>
+            <table className="es-ges__table">
+              <thead><tr><th>{R.meetingColumn}</th><th>{R.projectColumn}</th><th>{R.dateColumn}</th><th>{R.facilitatorColumn}</th><th>{R.eligibilityColumn}</th><th aria-label={R.register} /></tr></thead>
+              <tbody>
+                {visibleEvents.map((event) => {
+                  const selected = selectedId === event.id;
+                  return (
+                    <tr key={event.id} data-event-id={event.id} className={selected ? 'es-ges__table-row--selected' : ''}>
+                      <td><div>{event.name}</div><span className="es-ges__gate-tag">{event.level ? LEVEL_LABEL[event.level] || event.level : R.gateLabel}</span></td>
+                      <td><div>{registrationMatchFields?.initiativeType || R.projectLabel}</div><small>{registrationMatchFields?.leadingMarket || registrationMatchFields?.operatingUnit || ''}</small></td>
+                      <td><span className="es-ges__date-value"><CalendarIcon />{formatEventDate(event.date)}</span></td>
+                      <td>{event.facilitator || R.facilitatorUnknown}</td>
+                      <td><span className="es-ges__eligibility es-ges__eligibility--match"><span />{R.legendMatch}</span></td>
+                      <td><Button variant="primary" fillStyle="fill" isDisabled={registering} onPress={() => { selectEvent(event); handleRegister(event); }}><Text>{R.register}</Text></Button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {pageCount > 1 && (
+            <div className="es-ges__pagination" aria-label={R.pagination}>
+              <Button
+                variant="secondary"
+                fillStyle="clear"
+                isDisabled={currentPage === 1}
+                aria-label={R.previousPage}
+                onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                ‹
+              </Button>
+              {pageNumbers.map((page) => (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'primary' : 'secondary'}
+                  fillStyle={page === currentPage ? 'fill' : 'clear'}
+                  onPress={() => setCurrentPage(page)}
+                  aria-current={page === currentPage ? 'page' : undefined}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="secondary"
+                fillStyle="clear"
+                isDisabled={currentPage === pageCount}
+                aria-label={R.nextPage}
+                onPress={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+              >
+                ›
+              </Button>
+            </div>
           )}
-
-          {activeTab === 'calendar' ? (
-            <div className="es-ges__calendar">
-              <div className="es-ges__nav">
-                <ActionButton UNSAFE_className="es-ges__nav-btn" aria-label={R.prevMonth} onPress={goPrevMonth}>
-                  <ChevronLeft />
-                </ActionButton>
-                <span className="es-ges__month">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-                <ActionButton UNSAFE_className="es-ges__nav-btn" aria-label={R.nextMonth} onPress={goNextMonth}>
-                  <ChevronRight />
-                </ActionButton>
-              </div>
-
-              <div className="es-ges__legend">
-                <span className="es-ges__legend-item">
-                  <span className="es-ges__dot es-ges__dot--match" />
-                  {R.legendMatch}
-                </span>
-                <span className="es-ges__legend-item">
-                  <span className="es-ges__dot es-ges__dot--none" />
-                  {R.legendNonEligible}
-                </span>
-              </div>
-
-              <div className="es-ges__weekdays">
-                {WEEKDAY_LABELS.map((w) => (
-                  <span key={w} className="es-ges__weekday">{w}</span>
-                ))}
-              </div>
-
-              <div className="es-ges__grid">
-                {weeks.map((week, wi) => (
-                  <div className="es-ges__week" key={wi}>
-                    {week.map((day, di) => {
-                      if (day == null) return <div className="es-ges__cell es-ges__cell--blank" key={di} />;
-                      const dayEvents = eventsByDay[day] || [];
-                      const primary = dayEvents[0];
-                      const eligible = primary && isEligible(primary);
-                      const selected = primary && selectedId === primary.id;
-                      return (
+          <div className="es-ges__calendar-section">
+            <div className="es-ges__calendar-heading">
+              <h2 className={`es-ges__title ${dialogTitle}`}>{formatLabel(R.modalTitle, { number: gateNumber })}</h2>
+              <p className={`es-ges__subtitle ${dialogDesc}`}>{subtitle} {R.calendarHint}</p>
+            </div>
+            <div className="es-ges__calendar-shell">
+              <Button variant="secondary" fillStyle="clear" aria-label={R.previousMonth} onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}>
+                <ChevronLeft />
+              </Button>
+              {calendarMonths.map((month) => {
+                const monthEvents = filteredEvents.filter((event) => event.date.getFullYear() === month.getFullYear() && event.date.getMonth() === month.getMonth());
+                const eventDays = new Set(monthEvents.map((event) => event.date.getDate()));
+                return (
+                  <div className="es-ges__month" key={`${month.getFullYear()}-${month.getMonth()}`}>
+                    <h3>{MONTH_NAMES[month.getMonth()]} {month.getFullYear()}</h3>
+                    <div className="es-ges__calendar-weekdays">{['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}</div>
+                    <div className="es-ges__calendar-grid">
+                      {buildMonthGrid(month.getFullYear(), month.getMonth()).flatMap((week, weekIndex) => week.map((day, dayIndex) => (
                         <button
                           type="button"
-                          key={di}
-                          className={[
-                            'es-ges__cell',
-                            primary ? 'es-ges__cell--event' : '',
-                            eligible ? 'es-ges__cell--eligible' : '',
-                            selected ? 'es-ges__cell--selected' : '',
-                          ].filter(Boolean).join(' ')}
-                          disabled={!eligible}
-                          onClick={() => primary && selectEvent(primary)}
-                        >
-                          <span className="es-ges__date">{day}</span>
-                          {primary && (
-                            <span className="es-ges__event">
-                              <span className={`es-ges__dot ${eligible ? 'es-ges__dot--match' : 'es-ges__dot--none'}`} />
-                              <span className="es-ges__event-name">{primary.name}</span>
-                            </span>
-                          )}
-                          {dayEvents.length > 1 && (
-                            <span className="es-ges__more">{formatLabel(R.moreEvents, { count: dayEvents.length - 1 })}</span>
-                          )}
-                        </button>
-                      );
-                    })}
+                          key={`${weekIndex}-${dayIndex}`}
+                          className={day && eventDays.has(day) ? 'es-ges__calendar-day--event' : ''}
+                          aria-pressed={day ? selectedDate === new Date(month.getFullYear(), month.getMonth(), day).toDateString() : undefined}
+                          onClick={() => selectDate(day, month)}
+                          disabled={!day || !eventDays.has(day)}
+                        >{day || ''}</button>
+                      )))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
+              <Button variant="secondary" fillStyle="clear" aria-label={R.nextMonth} onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}>
+                <ChevronRight />
+              </Button>
             </div>
-          ) : (
-            <div className="es-ges__list">
-              {sortedEvents.length === 0 ? (
-                <div className={dialogDesc}>{R.listEmpty}</div>
-              ) : (
-                sortedEvents.map((e) => {
-                  const eligible = isEligible(e);
-                  const selected = selectedId === e.id;
-                  return (
-                    <button
-                      type="button"
-                      key={e.id}
-                      className={[
-                        'es-ges__row',
-                        eligible ? 'es-ges__row--eligible' : '',
-                        selected ? 'es-ges__row--selected' : '',
-                      ].filter(Boolean).join(' ')}
-                      disabled={!eligible}
-                      onClick={() => selectEvent(e)}
-                    >
-                      <span className={`es-ges__radio ${selected ? 'es-ges__radio--selected' : ''}`} aria-hidden="true" />
-                      <span className="es-ges__row-details">
-                        <span className="es-ges__row-name">{e.name}</span>
-                        <span className="es-ges__row-date">{formatEventDate(e.date)}</span>
-                      </span>
-                      {eligible ? (
-                        <span className="es-ges__row-status es-ges__row-status--match">
-                          <Checkmark aria-hidden="true" />
-                          {R.legendMatch}
-                        </span>
-                      ) : (
-                        <span className="es-ges__row-status es-ges__row-status--none">
-                          {formatLabel(R.notEligibleReason, { level: LEVEL_LABEL[e.level] || e.level, value: e.levelValue })}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          )}
+          </div>
         </>
       )}
 
@@ -350,14 +319,7 @@ function GateEventSelector({ registrationLevel, registrationMatchFields, taskId,
         </div>
       )}
 
-      <div className="es-ges__footer">
-        <Button variant="secondary" fillStyle="outline" isDisabled={registering} onPress={onCancel}>
-          {R.cancel}
-        </Button>
-        <Button variant="primary" fillStyle="fill" isDisabled={!selectedEvent || registering} onPress={handleRegister}>
-          {registering ? <ProgressCircle size="S" isIndeterminate aria-label={R.registering} /> : <Text>{R.register}</Text>}
-        </Button>
-      </div>
+      {onCancel && registering && <Button variant="secondary" fillStyle="clear" onPress={onCancel}>{R.cancel}</Button>}
     </section>
   );
 }

@@ -2,11 +2,10 @@
  * <license header>
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DialogContainer } from '@react-spectrum/s2';
 import './dashboard.css';
 import ProjectHeader from './ProjectHeader';
-import NeedAttentionDialog from './NeedAttentionDialog';
 import ArtifactDialog from './ArtifactDialog';
 import PreReadSidePanel from './PreReadSidePanel';
 import GateEventSelector from './GateEventSelector';
@@ -26,6 +25,7 @@ import { dashboardBase } from './styles';
 import { getImsAuth } from '../../api/imsAuth';
 import { extractFields, submitValidatedFields } from '../../api/artifactClient';
 import { fetchProjectDocuments, findGatePreReadDocument } from '../../api/documentsClient';
+import { fetchGateEvents, filterEligibleGateEvents } from '../../api/gateEventsClient';
 import { LABELS, formatLabel } from '../../constants/labels';
 
 /**
@@ -45,7 +45,6 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // selected on load — including for a brand-new project — instead of always
   // assuming gate 1 is the right key.
   const [selectedGate, setSelectedGate] = useState(defaultGate);
-  const [isAttentionOpen, setAttentionOpen] = useState(false);
   const [isArtifactOpen, setArtifactOpen] = useState(false);
   // Bumped every time the Artifacts popup opens so it remounts fresh — the
   // previous session's uploaded-file list is cleared (see the `key` below).
@@ -84,6 +83,42 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // button while the generated pre-read document is being located.
   const [isDownloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState('');
+  const [gateMeetings, setGateMeetings] = useState([]);
+  const [gateMeetingsLoading, setGateMeetingsLoading] = useState(true);
+  const [gateMeetingsError, setGateMeetingsError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    if (!project) {
+      setGateMeetings([]);
+      setGateMeetingsLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+    setGateMeetingsLoading(true);
+    setGateMeetingsError('');
+    (async () => {
+      try {
+        const ctx = await getImsAuth();
+        const meetings = await fetchGateEvents({
+          hostname: ctx.hostname,
+          imsToken: ctx.imsToken,
+          imsOrg: ctx.imsOrg,
+        });
+        if (!active) return;
+        setGateMeetings(filterEligibleGateEvents(meetings, project.registrationMatchFields));
+        setGateMeetingsLoading(false);
+      } catch (error) {
+        if (!active) return;
+        setGateMeetingsError(error.message);
+        setGateMeetingsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [project?.registrationMatchFields]);
 
   if (!project) return null;
 
@@ -96,10 +131,6 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
 
   // Header CTAs open their modals; anything else bubbles up.
   const handleAction = (id) => {
-    if (id === 'need-attention') {
-      setAttentionOpen(true);
-      return;
-    }
     if (id === 'register-gate') {
       setRegistering(true);
       return;
@@ -215,8 +246,7 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   };
 
   const isNew = !!project.isNew;
-  // The onboarding header drops the "Need Attention" CTA (Figma new-project state).
-  const baseActions = (project.header.actions || []).filter((a) => !(isNew && a.id === 'need-attention'));
+  const baseActions = project.header.actions || [];
   // Prepended when the selected gate has a real Workfront task that isn't
   // registered for a Gate meeting event yet ("DE:Gate Meeting Innovation" is
   // empty) — leftmost pill in the header action row. `!registeredEvent` is
@@ -264,25 +294,11 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // status card once one's been picked (Figma 1889-121384 / 1889-121464).
   // Shared between the new-project and regular exec layouts so there's one
   // implementation of each state.
-  const mainSlotOverride = isRegistering ? (
-    <GateEventSelector
-      registrationLevel={project.registrationLevel}
-      registrationMatchFields={project.registrationMatchFields}
-      taskId={gate.id}
-      onCancel={() => setRegistering(false)}
-      onRegistered={(event) => {
-        setRegisteredEvents((prev) => ({ ...prev, [selectedGate]: event }));
-        setRegistering(false);
-        // Workfront now has "DE:Gate Meeting Innovation" set for this gate's
-        // task — silently re-fetch so gate.gateMeetingRegistered catches up
-        // server-side (the optimistic registeredEvents entry above already
-        // hides this gate's header button in the meantime).
-        if (onProjectRefresh) onProjectRefresh();
-      }}
-    />
-  ) : registeredEvent ? (
+  const mainSlotOverride = registeredEvent ? (
     <GateRegistrationStatusCard
       facilitatorName={project.ownerName}
+      gateNumber={selectedGate}
+      preReadGenerated={!!gate.preReadGenerated}
       registeredEvent={registeredEvent}
       onViewPreRead={() => handleAction('pre-read')}
       onViewGateDetails={() => {
@@ -301,6 +317,28 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
     />
   ) : null;
 
+  if (isRegistering) {
+    return (
+      <div className={`es-registration-screen ${dashboardBase}`}>
+        <GateEventSelector
+          gateNumber={selectedGate}
+          registrationLevel={project.registrationLevel}
+          registrationMatchFields={project.registrationMatchFields}
+          meetings={gateMeetings}
+          meetingsLoading={gateMeetingsLoading}
+          meetingsError={gateMeetingsError}
+          taskId={gate.id}
+          onCancel={() => setRegistering(false)}
+          onRegistered={(event) => {
+            setRegisteredEvents((prev) => ({ ...prev, [selectedGate]: event }));
+            setRegistering(false);
+            if (onProjectRefresh) onProjectRefresh();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`es-dashboard ${dashboardBase}`}>
       <ProjectHeader header={header} onAction={handleAction} />
@@ -312,6 +350,8 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           savedArtifacts={savedArtifacts}
           keyMetrics={gate.keyMetrics}
           ownerName={project.ownerName}
+          gateNumber={selectedGate}
+          preReadGenerated={!!gate.preReadGenerated}
           registeredEvent={registeredEvent}
           onRegister={() => setRegistering(true)}
           onViewPreRead={() => handleAction('pre-read')}
@@ -344,15 +384,6 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           </div>
         </div>
       )}
-
-      <DialogContainer onDismiss={() => setAttentionOpen(false)}>
-        {isAttentionOpen && (
-          <NeedAttentionDialog
-            data={project.needAttention}
-            onPrimaryAction={() => setAttentionOpen(false)}
-          />
-        )}
-      </DialogContainer>
 
       <DialogContainer onDismiss={() => setArtifactOpen(false)}>
         {isArtifactOpen && (

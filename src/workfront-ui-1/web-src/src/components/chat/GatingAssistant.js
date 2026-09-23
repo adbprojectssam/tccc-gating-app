@@ -10,6 +10,7 @@ import Maximize from '@react-spectrum/s2/icons/Maximize';
 import Minimize from '@react-spectrum/s2/icons/Minimize';
 import ThumbUp from '@react-spectrum/s2/icons/ThumbUp';
 import ThumbDown from '@react-spectrum/s2/icons/ThumbDown';
+import Copy from '@react-spectrum/s2/icons/Copy';
 import ArrowCurved from '@react-spectrum/s2/icons/ArrowCurved';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -79,6 +80,23 @@ function splitSuggestions(content) {
   return { body, suggestions };
 }
 
+// Keep clipboard output useful to non-technical users: copy the visible answer,
+// not markdown markers or the assistant's internal quick-action section.
+function toClipboardText(content) {
+  const { body } = splitSuggestions(content || '');
+  return body
+    .replace(/```[\s\S]*?```/g, (block) => block.replace(/^```[^\n]*\n?|```$/g, ''))
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '• ')
+    .replace(/^\s*\d+[.)]\s+/gm, '')
+    .replace(/[*_~`]/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 /**
  * Gating Assistant — the Figma docked side panel (right rail). Opening it pushes
  * the dashboard (the shell adds right padding); a Maximize toggle grows it from
@@ -89,6 +107,7 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   // Priming (project id + event/non-event classification) runs before the
   // launcher is shown; `ready` flips true once that priming call completes.
   const [ready, setReady] = useState(false);
@@ -222,6 +241,13 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
       return <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>;
     }
     const { body, suggestions } = splitSuggestions(m.content);
+    const copyResponse = async () => {
+      const text = toClipboardText(m.content);
+      if (!text || !navigator.clipboard) return;
+      await navigator.clipboard.writeText(text);
+      setCopiedId(m.id);
+      window.setTimeout(() => setCopiedId((id) => (id === m.id ? null : id)), 1800);
+    };
     return (
       <>
         {body ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown> : null}
@@ -232,6 +258,10 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
           <ActionButton isQuiet size="S" aria-label="Bad response">
             <ThumbDown />
           </ActionButton>
+          <ActionButton isQuiet size="S" aria-label={copiedId === m.id ? 'Response copied' : 'Copy response'} onPress={copyResponse}>
+            <Copy />
+          </ActionButton>
+          {copiedId === m.id && <span className="es-ga__copied" role="status">Copied</span>}
         </div>
         {suggestions.length > 0 && (
           <div className="es-ga__next">
@@ -270,11 +300,13 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
   }
 
   return (
-    <aside
-      className={maximized ? 'es-ga es-ga--max' : 'es-ga'}
-      role="dialog"
-      aria-label="Gating Assistant"
-    >
+    <>
+      {maximized && <div className="es-ga__underlay" aria-hidden="true" />}
+      <aside
+        className={maximized ? 'es-ga es-ga--max' : 'es-ga'}
+        role="dialog"
+        aria-label="Gating Assistant"
+      >
       <header className="es-ga__header">
         <span className="es-ga__avatar">
           <SparkleIcon />
@@ -343,7 +375,8 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
           </a>
         </p>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 

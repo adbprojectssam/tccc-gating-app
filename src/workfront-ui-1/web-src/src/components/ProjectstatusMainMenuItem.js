@@ -80,7 +80,7 @@ const ProjectstatusMainMenuItem = () => {
     );
   }
 
-  const assistantWidth = assistantOpen ? (assistantMax ? 500 : 350) : 0;
+  const assistantWidth = assistantOpen && !assistantMax ? 350 : 0;
 
   return (
     <div className="es-shell" style={{ "--es-assistant-w": `${assistantWidth}px` }}>

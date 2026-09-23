@@ -53,7 +53,22 @@
 }
 
 .es-ga--max {
-  width: 500px;
+  top: 12px;
+  right: 50%;
+  width: min(744px, calc(100vw - 24px));
+  height: calc(100vh - 24px);
+  max-height: calc(100vh - 24px);
+  transform: translateX(50%);
+  border: 1px solid #e1e1e1;
+  border-radius: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.es-ga__underlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.18);
 }
 
 /* ---------- Header (dark) ---------- */
@@ -257,8 +272,15 @@
 /* ---------- Feedback thumbs ---------- */
 .es-ga__feedback {
   display: flex;
+  align-items: center;
   gap: 4px;
   margin-top: 8px;
+}
+.es-ga__copied {
+  margin-left: 4px;
+  color: #505050;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 /* ---------- What would you like to do next? ---------- */
@@ -431,6 +453,18 @@
 .es-ga__disclaimer a {
   color: #717171;
   text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .es-ga--max {
+    top: 0;
+    right: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    transform: none;
+    border-radius: 0;
+  }
 }
 
 /* ---------- Shell (push the dashboard) ---------- */

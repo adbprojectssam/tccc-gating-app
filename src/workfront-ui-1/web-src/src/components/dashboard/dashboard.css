@@ -526,14 +526,6 @@
   --iconPrimary: var(--es-text-subdued);
 }
 
-/* Orange leading icon in the "Live Status" Picker (Figma non-semantic orange).
-   S2 re-renders the value-slot icon with its own classes, so color it by
-   targeting the icon SVG inside the picker value span (the chevron sits AFTER
-   that span, so it stays neutral). */
-.es-live-status button > span svg path {
-  fill: #e86a00 !important;
-}
-
 /* ---------- IO fields ---------- */
 .es-fields {
   display: flex;
@@ -689,92 +681,6 @@
   border-top: 1px solid var(--es-border);
 }
 
-/* ---------- Need Attention dialog ---------- */
-.es-attention {
-  position: relative;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.es-attention__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-
-.es-attention__head {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.es-attention__title {
-  margin: 0;
-  padding-right: 24px;
-}
-
-.es-attention-list {
-  /* Figma: numbered (decimal) list. Must NOT be display:flex — flex containers
-     suppress list markers, which would drop the 1. / 2. numbering. */
-  margin: 0;
-  padding-left: 22px;
-  list-style: decimal;
-  line-height: 1.5;
-}
-
-.es-attention-list li + li {
-  margin-top: 8px;
-}
-
-.es-attention__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* ---------- Artifact upload dialog ---------- */
-.es-artifact {
-  position: relative;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.es-artifact__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.es-artifact__title {
-  margin: 0;
-  padding-right: 24px;
-}
-.es-artifact__desc {
-  margin: 0 0 4px;
-  line-height: 1.4;
-}
-.es-artifact__generating {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 28px 0;
-}
-
-/* Dialogs render in a portal outside .es-dashboard, so the --es-* tokens don't
-   resolve here — mirror the resolved hex values (same as the token block). */
-.es-dropzone {
-  border: 1px dashed #dadada;
-  border-radius: 10px;
-  height: 327px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  text-align: center;
-}
 .es-dropzone svg {
   color: #131313;
 }
@@ -1253,10 +1159,214 @@
   border: 1px solid #d1d5db;
   border-radius: 12px;
 }
+.es-registration-screen {
+  min-height: 100vh;
+  padding: 20px 36px 28px;
+  background: #fff;
+  color: #292929;
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+}
+.es-registration-screen .es-ges {
+  width: 100%;
+  max-width: 1274px;
+  margin: 0 auto;
+  padding: 14px 0 20px;
+  border: 0;
+  border-radius: 0;
+}
+.es-registration-screen .es-ges__header {
+  gap: 4px;
+}
+.es-registration-screen .es-ges__title {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.es-registration-screen .es-ges__subtitle,
+.es-registration-screen .es-ges__table,
+.es-registration-screen .es-ges__calendar-grid,
+.es-registration-screen .es-ges__calendar-weekdays {
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+}
+.es-ges__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 48px;
+}
+.es-ges__pagination button {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+}
+.es-ges__calendar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+.es-ges__calendar-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.es-ges__calendar-heading h2,
+.es-ges__calendar-heading p {
+  margin: 0;
+}
+.es-ges__calendar-shell {
+  display: grid;
+  grid-template-columns: 32px repeat(3, minmax(0, 1fr)) 32px;
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+.es-ges__calendar-shell > button {
+  margin-top: 0;
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  align-self: start;
+  border: none;
+}
+.es-ges__calendar-shell > button svg {
+  width: 20px;
+  height: 20px;
+  --iconPrimary: #292929;
+}
+.es-ges__month {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.es-ges__month h3 {
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 700;
+}
+.es-ges__calendar-weekdays,
+.es-ges__calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px 18px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 16px;
+}
+.es-ges__calendar-weekdays {
+  color: #505050;
+  font-weight: 700;
+}
+.es-ges__calendar-grid span {
+  position: relative;
+  min-height: 20px;
+  color: #505050;
+}
+.es-ges__calendar-grid button {
+  position: relative;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #505050;
+  font: inherit;
+  line-height: 16px;
+  cursor: pointer;
+}
+.es-ges__calendar-grid button:disabled {
+  color: #9a9a9a;
+  cursor: default;
+}
+.es-ges__calendar-grid button:not(:disabled):hover {
+  color: #079355;
+  font-weight: 700;
+}
+.es-ges__calendar-grid button[aria-pressed='true'] {
+  color: #079355;
+  font-weight: 700;
+}
+.es-ges__calendar-grid span.es-ges__calendar-day--event::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #079355;
+  transform: translateX(-50%);
+}
+.es-ges__calendar-grid button.es-ges__calendar-day--event::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #079355;
+  transform: translateX(-50%);
+}
 .es-ges__header {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.es-ges__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.es-ges__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 3px 8px 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: #e9e9e9;
+  color: #292929;
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  cursor: pointer;
+}
+.es-ges__back svg {
+  width: 14px;
+  height: 14px;
+  --iconPrimary: #292929;
+}
+.es-ges__back:hover {
+  background: #dedede;
+}
+.es-ges__clear-filters {
+  width: 94px;
+  min-width: 94px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #292929;
+  font-family: adobe-clean, ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  text-decoration: underline;
+  text-underline-position: from-font;
+  cursor: pointer;
+}
+.es-ges__clear-filters:hover {
+  color: #505050;
 }
 .es-ges__title {
   margin: 0;
@@ -1340,7 +1450,7 @@
 }
 .es-ges__month {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
   color: #292929;
 }
 .es-ges__legend {
@@ -1547,6 +1657,124 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+/* Figma registration table state: filters and one-click eligible event rows. */
+.es-ges__filters {
+  display: grid;
+  grid-template-columns: 286px 286px 286px 286px 94px;
+  gap: 8px;
+  align-items: center;
+}
+.es-registration-screen .es-ges__filters > * {
+  min-width: 0;
+}
+.es-registration-screen .es-ges__filters > :first-child,
+.es-registration-screen .es-ges__filters > :nth-child(2),
+.es-registration-screen .es-ges__filters > :nth-child(3),
+.es-registration-screen .es-ges__filters > :nth-child(4) {
+  width: 286px;
+}
+.es-registration-screen .es-ges__filters > :last-child {
+  width: 94px;
+  min-width: 94px;
+}
+.es-ges__table-wrap {
+  overflow: visible;
+  border: 1px solid #dedede;
+  border-radius: 8px;
+}
+.es-ges__table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  color: #505050;
+  font-size: 14px;
+  line-height: 18px;
+}
+.es-ges__table th {
+  height: 36px;
+  padding: 8px 16px;
+  background: #f5f5f5;
+  color: #292929;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.es-ges__table td {
+  height: 82px;
+  padding: 8px 16px;
+  border-top: 1px solid #e1e1e1;
+  vertical-align: middle;
+}
+.es-ges__table td small {
+  display: block;
+  margin-top: 3px;
+  color: #737373;
+  font-size: 12px;
+}
+.es-ges__table th:nth-child(1), .es-ges__table td:nth-child(1) { width: 31%; }
+.es-ges__table th:nth-child(2), .es-ges__table td:nth-child(2) { width: 18%; }
+.es-ges__table th:nth-child(3), .es-ges__table td:nth-child(3) { width: 14%; }
+.es-ges__table th:nth-child(4), .es-ges__table td:nth-child(4) { width: 12%; }
+.es-ges__table th:nth-child(5), .es-ges__table td:nth-child(5) { width: 19%; }
+.es-ges__table th:nth-child(6), .es-ges__table td:nth-child(6) { width: 88px; }
+.es-ges__table td:nth-child(6) button { min-width: 88px; }
+.es-ges__table-row--selected {
+  background: #f5f9ff;
+}
+.es-ges__gate-tag {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #d5f7e2;
+  color: #176b43;
+  font-size: 12px;
+  font-weight: 700;
+}
+.es-ges__date-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.es-ges__date-value svg {
+  width: 18px;
+  height: 18px;
+  --iconPrimary: #505050;
+}
+.es-ges__eligibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.es-ges__eligibility > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8a8a8a;
+}
+.es-ges__eligibility--match > span {
+  background: #079355;
+}
+@media (max-width: 800px) {
+  .es-ges__filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .es-registration-screen {
+    padding: 16px;
+  }
+  .es-registration-screen .es-ges__filters > * {
+    width: 100%;
+  }
+  .es-registration-screen .es-ges__calendar-shell {
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+  }
+  .es-registration-screen .es-ges__month:nth-of-type(4) {
+    display: none;
+  }
 }
 
 /* ---------- Misc ---------- */

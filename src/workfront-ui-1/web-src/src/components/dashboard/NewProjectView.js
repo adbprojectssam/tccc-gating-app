@@ -69,6 +69,8 @@ function NewProjectView({
   savedArtifacts = [],
   keyMetrics,
   ownerName,
+  gateNumber = '1',
+  preReadGenerated,
   registeredEvent,
   onRegister,
   onViewPreRead,
@@ -131,6 +133,8 @@ function NewProjectView({
           ) : preReadSubmitted ? (
             <GateRegistrationStatusCard
               facilitatorName={ownerName}
+              gateNumber={gateNumber}
+              preReadGenerated={preReadGenerated}
               artifacts={savedArtifacts}
               registeredEvent={registeredEvent}
               onRegister={onRegister}

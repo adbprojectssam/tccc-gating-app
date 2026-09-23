@@ -27,19 +27,9 @@ export const sampleProject = {
     actions: [
       { id: 'artifacts', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'file' },
       { id: 'pre-read', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
-      { id: 'need-attention', label: LABELS.actions.needAttention, variant: 'negative', fillStyle: 'fill', icon: 'alertTriangle' },
     ],
   },
 
-  // Modal shown when the "Need Attention" header CTA is clicked.
-  needAttention: {
-    title: formatLabel(LABELS.templates.itemsNeedAttention, { count: 2 }),
-    items: [
-      'Margin analysis overdue since June 12 - blocking FIN sign-off',
-      'TECH feasibility in review - sign-off pending',
-    ],
-    primaryAction: { id: 'open-risk-view', label: LABELS.actions.openFullRiskView },
-  },
 
   pipeline: {
     title: LABELS.sections.gatePipeline,
@@ -48,7 +38,7 @@ export const sampleProject = {
     currentKey: '2',
     gates: [
       { number: 1, label: 'Gate 1', status: 'completed', statusLabel: LABELS.status.completed },
-      { number: 2, label: 'Gate 2', status: 'attention', statusLabel: LABELS.status.needAttention },
+      { number: 2, label: 'Gate 2', status: 'current', statusLabel: LABELS.status.inProgress },
       { number: 3, label: 'Gate 3', status: 'not-started', statusLabel: LABELS.status.notStarted },
       { number: 4, label: 'Gate 4', status: 'not-started', statusLabel: LABELS.status.notStarted },
       { number: 5, label: 'Gate 5', status: 'not-started', statusLabel: LABELS.status.notStarted },
@@ -89,7 +79,6 @@ export const sampleProject = {
       gateDetail: {
         title: 'Gate 1 - Concept approval',
         target: formatLabel(LABELS.templates.target, { date: 'Mar 12, 2026' }),
-        liveStatus: { ariaLabel: 'Live status', selectedKey: 'two-changes', options: [{ id: 'two-changes', label: formatLabel(LABELS.templates.liveStatusChanges, { count: 2 }) }, { id: 'all-changes', label: 'All changes' }, { id: 'no-changes', label: 'No changes' }] },
         approval: { tone: 'positive', title: 'Approved Unanimously', detail: 'Closed in 6 days - faster than the 9-day LAOU average · no conditions attached', linkLabel: LABELS.actions.viewApprovalTrail, linkHref: '#approval-trail' },
         stage: { label: formatLabel(LABELS.templates.stage, { name: 'Stage 1' }), text: 'Strategy to Idea → Advanced to Stage 2 on approval', tone: 'positive', statusLabel: LABELS.status.completed, approvedOn: formatLabel(LABELS.templates.approvedOn, { date: 'March 12, 2026' }) },
         tags: [
@@ -165,7 +154,6 @@ export const sampleProject = {
       gateDetail: {
         title: 'Gate 2 - Decision to develop',
         target: formatLabel(LABELS.templates.target, { date: 'Dec 1, 2026' }),
-        liveStatus: { ariaLabel: 'Live status', selectedKey: 'two-changes', options: [{ id: 'two-changes', label: formatLabel(LABELS.templates.liveStatusChanges, { count: 2 }) }, { id: 'all-changes', label: 'All changes' }, { id: 'no-changes', label: 'No changes' }] },
         stage: { label: formatLabel(LABELS.templates.stage, { name: 'Stage 1' }), text: 'Strategy to Idea → Will advance to Stage 2 on approval · Review was June 20' },
         tags: [
           formatLabel(LABELS.templates.tag, { label: LABELS.tags.ou, value: 'Latin America' }),

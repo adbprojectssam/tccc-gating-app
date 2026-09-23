@@ -37,7 +37,9 @@ function formatEventDate(date) {
  */
 function GateRegistrationStatusCard({
   facilitatorName,
+  gateNumber = '1',
   artifacts = [],
+  preReadGenerated = false,
   registeredEvent,
   onRegister,
   onViewPreRead,
@@ -52,7 +54,7 @@ function GateRegistrationStatusCard({
         <div className="es-gate-registration__content">
           <Badge variant="positive">
             <Checkmark aria-hidden="true" />
-            <Text>{R.registeredBadge}</Text>
+            <Text>{preReadGenerated ? R.registeredSharedBadge : R.registeredBadge}</Text>
           </Badge>
           <h2 className={`es-gate-registration__heading ${preReadPanelTitle}`}>
             {formatLabel(R.registeredHeading, { name: registeredEvent.name })}
@@ -76,7 +78,7 @@ function GateRegistrationStatusCard({
             <Calendar aria-hidden="true" />
           </div>
           <div className="es-gate-registration__meeting-details">
-            <h3 className={boldLabelText}>{R.meetingTitle}</h3>
+            <h3 className={boldLabelText}>{formatLabel(R.meetingTitle, { number: gateNumber })}</h3>
             <p className={detailText}>{registeredEvent.name}</p>
             <p className={detailText}>{formatEventDate(registeredEvent.date)}</p>
             <p className={detailText}>{formatLabel(R.facilitatorLine, { name: facilitatorName })}</p>

@@ -88,7 +88,6 @@ const DEFAULT_DISTRIBUTION = [7, 14, 17, 21, 26, 31, 36, 41, 46, 51, 47, 42, 37,
 const HEADER_ACTIONS = [
   { id: 'artifacts', label: LABELS.actions.preRead, variant: 'primary', fillStyle: 'fill', icon: 'file' },
   { id: 'pre-read', label: LABELS.actions.preReadSlides, variant: 'secondary', fillStyle: 'outline', icon: 'slideshow' },
-  { id: 'need-attention', label: LABELS.actions.needAttention, variant: 'negative', fillStyle: 'fill', icon: 'alertTriangle' },
 ];
 
 const APPROVAL_COLUMNS = [
@@ -103,17 +102,6 @@ const APPROVAL_COLUMNS = [
  * decision ("match Figma with placeholders"), these render the Figma design.
  * Replace with real data once the corresponding Workfront sources exist.
  * ------------------------------------------------------------------------ */
-
-// Live Status picker (Figma "Picker (S)" with the orange movie-camera icon).
-const PLACEHOLDER_LIVE_STATUS = {
-  ariaLabel: 'Live status',
-  selectedKey: 'two-changes',
-  options: [
-    { id: 'two-changes', label: formatLabel(LABELS.templates.liveStatusChanges, { count: 2 }) },
-    { id: 'all-changes', label: 'All changes' },
-    { id: 'no-changes', label: 'No changes' },
-  ],
-};
 
 // "Approved Unanimously" in-line alert shown on a completed gate.
 const PLACEHOLDER_APPROVAL_ALERT = {
@@ -310,14 +298,13 @@ export function mapWorkfrontProject(raw) {
     };
   };
 
-  // Gate detail card matching Figma: Live Status picker, "Approved Unanimously"
+  // Gate detail card matching Figma: "Approved Unanimously"
   // alert (completed gates), Stage line + Completed badge, tags, PMO Comments.
   const buildGateDetail = (g) => ({
     title: g.name || `Gate ${g.number}`,
     target: g.plannedCompletionDate
       ? formatLabel(LABELS.templates.target, { date: formatDate(g.plannedCompletionDate) })
       : (targetDate ? formatLabel(LABELS.templates.target, { date: formatDate(targetDate) }) : ''),
-    liveStatus: PLACEHOLDER_LIVE_STATUS,
     approval: g.completed ? PLACEHOLDER_APPROVAL_ALERT : undefined,
     stage: buildStage(g),
     tags,
@@ -340,9 +327,8 @@ export function mapWorkfrontProject(raw) {
       status = 'completed';
       statusLabel = LABELS.status.completed;
     } else if (!currentAssigned && g.fetched) {
-      // Next incomplete gate → "Need Attention" (red), per Figma.
-      status = 'attention';
-      statusLabel = LABELS.status.needAttention;
+      status = 'current';
+      statusLabel = LABELS.status.inProgress;
       currentAssigned = true;
       currentKey = String(g.number);
     } else {
@@ -388,7 +374,6 @@ export function mapWorkfrontProject(raw) {
       gateDetail: {
         title: 'Gate 1',
         target: targetDate ? formatLabel(LABELS.templates.target, { date: formatDate(targetDate) }) : '',
-        liveStatus: PLACEHOLDER_LIVE_STATUS,
         tags,
         pmoComments: { label: LABELS.fields.pmoComments, value: '', emptyText: LABELS.messages.emptyPmo },
       },
@@ -430,13 +415,6 @@ export function mapWorkfrontProject(raw) {
     // Business Case Summary + Key Metrics for the pre-read side panel (see
     // above) — project-level, so it's the same regardless of selected gate.
     preReadSummary,
-
-    // Empty state — no "need attention" API.
-    needAttention: {
-      title: formatLabel(LABELS.templates.itemsNeedAttention, { count: 0 }),
-      items: [],
-      primaryAction: { id: 'open-risk-view', label: LABELS.actions.openFullRiskView },
-    },
 
     pipeline: { title: LABELS.sections.gatePipeline, currentKey, gates: pipelineGates },
     defaultGate: currentKey,

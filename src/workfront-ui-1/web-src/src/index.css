@@ -7,3 +7,15 @@ html,
 body {
   margin: 0;
 }
+
+/* Spectrum intentionally leaves cursor treatment to the host application. */
+button:not(:disabled):not([aria-disabled='true']),
+[role='button']:not([aria-disabled='true']),
+[role='tab']:not([aria-disabled='true']),
+[role='radio']:not([aria-disabled='true']),
+[role='option']:not([aria-disabled='true']),
+[role='switch']:not([aria-disabled='true']),
+[role='checkbox']:not([aria-disabled='true']),
+[role='menuitem']:not([aria-disabled='true']) {
+  cursor: pointer;
+}

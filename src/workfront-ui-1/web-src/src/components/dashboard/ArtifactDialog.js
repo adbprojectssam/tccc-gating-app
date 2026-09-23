@@ -175,7 +175,7 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
       {/* Portal renders outside .es-dashboard — re-apply the sans font. */}
       <div className={`es-artifact ${dashboardBase}`}>
         <div className="es-artifact__close">
-          <CloseButton isDisabled={locked} />
+          <CloseButton isDisabled={locked} aria-label="Close" onPress={onCancel} />
         </div>
         <h2 className={`es-artifact__title ${dialogTitle}`}>{LABELS.artifact.title}</h2>
         <p className={`es-artifact__desc ${dialogDesc}`}>{LABELS.artifact.description}</p>

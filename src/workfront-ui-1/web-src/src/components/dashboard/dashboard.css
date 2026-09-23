@@ -681,6 +681,49 @@
   border-top: 1px solid var(--es-border);
 }
 
+/* ---------- Artifact upload dialog ---------- */
+.es-artifact {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.es-artifact__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.es-artifact__title {
+  margin: 0;
+  padding-right: 24px;
+}
+.es-artifact__desc {
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+.es-artifact__generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 0;
+}
+
+/* Dialogs render in a portal outside .es-dashboard, so these rules use
+   resolved light-theme values instead of dashboard-scoped CSS variables. */
+.es-dropzone {
+  border: 1px dashed #dadada;
+  border-radius: 10px;
+  height: 327px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
 .es-dropzone svg {
   color: #131313;
 }

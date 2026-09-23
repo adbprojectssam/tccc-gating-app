@@ -19,7 +19,8 @@ const {
 } = require("../utils");
 
 const API_VERSION = "v22.0";
-const GATE_MEETING_FIELD = "DE:Gate Meeting Innovation";
+const GATE_MEETING_FIELD1 = "DE:Gate Meeting Innovation";
+const GATE_MEETING_FIELD2 = "DE:Gate Meeting Exloop";
 
 /** SSRF guard — only proxy to trusted Workfront hosts (see get-project). */
 function isAllowedHost(hostname, allowed) {
@@ -48,7 +49,13 @@ async function main(params) {
     );
     if (errorMessage) return errorResponse(400, errorMessage, logger);
 
-    const { hostname, taskId, gateEventId, WORKFRONT_API_KEY, WORKFRONT_ALLOWED_HOSTS } = params;
+    const {
+      hostname,
+      taskId,
+      gateEventId,
+      WORKFRONT_API_KEY,
+      WORKFRONT_ALLOWED_HOSTS,
+    } = params;
     if (!WORKFRONT_API_KEY)
       return errorResponse(500, "WORKFRONT_API_KEY is not configured", logger);
     if (!isAllowedHost(hostname, WORKFRONT_ALLOWED_HOSTS)) {
@@ -60,7 +67,8 @@ async function main(params) {
     // are passed as query params, not a JSON body.
     const updateParams = new URLSearchParams({
       apiKey: WORKFRONT_API_KEY,
-      [GATE_MEETING_FIELD]: JSON.stringify({ ID: gateEventId }),
+      [GATE_MEETING_FIELD1]: JSON.stringify({ ID: gateEventId }),
+      [GATE_MEETING_FIELD2]: JSON.stringify({ ID: gateEventId }),
     });
     const url =
       `https://${hostname}/attask/api/${API_VERSION}/task/${encodeURIComponent(taskId)}` +
@@ -80,7 +88,10 @@ async function main(params) {
       );
     }
 
-    return { statusCode: 200, body: { data: { registered: true, taskId, gateEventId } } };
+    return {
+      statusCode: 200,
+      body: { data: { registered: true, taskId, gateEventId } },
+    };
   } catch (error) {
     logger.error(error);
     const detail = error && error.message ? error.message : "server error";

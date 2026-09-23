@@ -114,12 +114,15 @@ export const LABELS = {
   // Artifact upload dialog (opened from the "Artifacts" header CTA).
   artifact: {
     title: 'Artifact',
+    updateTitle: 'Update Pre-read',
     description:
       `Upload the artifacts you have - a launch deck, budget, or strategy doc - and the pre-read will be extracted automatically. You don't need everything ready at once.`,
     dropTitle: 'Drag and drop your file',
     dropSubtitle: 'Or, select a file from your computer.',
     browse: 'Browse files',
     uploaded: 'Uploaded Artifacts',
+    newDocuments: 'New Document',
+    previousDocuments: 'Previous Documents',
     cancel: 'Cancel',
     save: 'Save Artifact',
     generatePreRead: 'Validate Data',

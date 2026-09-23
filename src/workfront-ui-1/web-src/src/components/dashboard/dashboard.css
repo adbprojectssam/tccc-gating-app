@@ -750,16 +750,27 @@
   clip: rect(0 0 0 0);
 }
 
+.es-artifact__documents {
+  min-height: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
 .es-artifact__uploaded {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: 24px;
+}
+.es-artifact__uploaded:first-child {
+  margin-top: 0;
 }
 .es-artifact__uploaded-title {
   margin: 0;
 }
 .es-artifact__file {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto 32px;
   align-items: center;
   gap: 12px;
   padding: 8px 0;
@@ -786,6 +797,18 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+.es-artifact__file-meta > div:first-child,
+.es-artifact__file > .spectrum-Body {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.es-artifact__file > button,
+.es-artifact__file > [role='button'] {
+  justify-self: end;
+  margin-left: auto;
+}
 .es-artifact__file-error {
   font-size: 12px;
   color: #d73220;
@@ -795,6 +818,17 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .es-artifact__documents {
+    max-height: 280px;
+  }
+
+  .es-artifact__file {
+    grid-template-columns: 32px minmax(0, 1fr) auto 32px;
+    gap: 8px;
+  }
 }
 
 /* ---------- Gate 1 readiness card (inline, not a dialog) ---------- */

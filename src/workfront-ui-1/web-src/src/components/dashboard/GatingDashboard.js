@@ -55,6 +55,8 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const [savedArtifacts, setSavedArtifacts] = useState([]);
   // The extraction result, once the Gate 1 readiness card has something to show.
   const [fields, setFields] = useState([]);
+  const [draftVersions, setDraftVersions] = useState([]);
+  const [selectedDraftId, setSelectedDraftId] = useState(null);
   // Drives the loading state inside whichever upload dialog (Artifacts /
   // Update Pre-read) is open — the extract-fields call happens while it's
   // still open, and only closes on success.
@@ -167,14 +169,19 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   // the dialog (seeded with any existing artifacts for the latter) always
   // hands back the full ready-file set, so this just records it and re-runs
   // extraction over it. `onDone` closes whichever dialog called it.
-  const runReview = async (readyFiles, onDone) => {
-    const ids = readyFiles.map((f) => f.documentId).filter(Boolean);
-    setSavedArtifacts(readyFiles.map((f) => ({ id: f.documentId, name: f.name, size: f.size })));
+  const runReview = async (newFiles, onDone) => {
+    const ids = newFiles.map((f) => f.documentId).filter(Boolean);
+    if (!ids.length) return;
+    const addedArtifacts = newFiles.map((f) => ({ id: f.documentId, name: f.name, size: f.size }));
+    setSavedArtifacts((previous) => [...previous, ...addedArtifacts]);
     setExtracting(true);
     setExtractError('');
     try {
       const list = await runExtraction(ids);
       setFields(list);
+      const draft = { id: `draft-${Date.now()}`, label: `Draft ${draftVersions.length + 1}`, documentIds: ids, fields: list };
+      setDraftVersions((previous) => [...previous, draft]);
+      setSelectedDraftId(draft.id);
       onDone();
     } catch (e) {
       setExtractError(e.message);
@@ -206,6 +213,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
         imsOrg: ctx.imsOrg,
       });
       setPreReadSubmitted(true);
+      setFields([]);
+      setSavedArtifacts([]);
+      setDraftVersions([]);
+      setSelectedDraftId(null);
       // Workfront now has the submitted fields (e.g. "DE:Build Stage Gate
       // Report?" may have flipped) — silently re-fetch so the dashboard
       // reflects them without a visible reload.
@@ -275,7 +286,17 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const readinessCard =
     fields.length > 0 && !preReadSubmitted ? (
       <PreReadValidation
+        key={selectedDraftId || 'draft-empty'}
         fields={fields}
+        drafts={draftVersions}
+        selectedDraftId={selectedDraftId}
+        onDraftChange={(id) => {
+          const draft = draftVersions.find((item) => item.id === id);
+          if (draft) {
+            setSelectedDraftId(id);
+            setFields(draft.fields);
+          }
+        }}
         projectTitle={header.title}
         onViewPreRead={() => setPreReadPanelOpen(true)}
         onUpdatePreRead={() => {
@@ -400,6 +421,7 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
       <DialogContainer onDismiss={() => setUpdatePreReadOpen(false)}>
         {isUpdatePreReadOpen && (
           <ArtifactDialog
+            key={`update-${savedArtifacts.map((artifact) => artifact.id).join('-')}`}
             onGenerate={handleUpdatePreRead}
             onCancel={() => setUpdatePreReadOpen(false)}
             initialFiles={savedArtifacts}

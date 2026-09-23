@@ -96,7 +96,7 @@ function FileTypeIcon({ extension }) {
  */
 function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating = false, generateError = '' }) {
   const [files, setFiles] = useState(() =>
-    initialFiles.map((f) => ({ id: f.id, name: f.name, size: f.size, status: 'ready', documentId: f.id }))
+    initialFiles.map((f) => ({ id: f.id, name: f.name, size: f.size, status: 'ready', documentId: f.documentId || f.id, isNew: false, source: 'previous' }))
   );
   const [dragOver, setDragOver] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -134,7 +134,7 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
     const list = Array.from(fileList || []);
     list.forEach((file) => {
       const localId = nextUid();
-      setFiles((prev) => [...prev, { id: localId, name: file.name, size: file.size, status: 'uploading' }]);
+      setFiles((prev) => [...prev, { id: localId, name: file.name, size: file.size, status: 'uploading', isNew: true, source: 'new' }]);
       uploadOne(localId, file);
     });
   };
@@ -167,8 +167,10 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
   const deleting = deletingId != null;
   const locked = deleting || isGenerating;
   const busy = anyUploading || locked;
-  const readyCount = files.filter((f) => f.status === 'ready').length;
-  const canGenerate = !busy && readyCount > 0;
+  const newFiles = files.filter((f) => f.isNew);
+  const previousFiles = files.filter((f) => !f.isNew);
+  const readyNewFiles = newFiles.filter((f) => f.status === 'ready');
+  const canGenerate = !busy && readyNewFiles.length > 0;
 
   return (
     <CustomDialog size="M" isDismissible={!isGenerating} padding="none">
@@ -177,7 +179,9 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
         <div className="es-artifact__close">
           <CloseButton isDisabled={locked} aria-label="Close" onPress={onCancel} />
         </div>
-        <h2 className={`es-artifact__title ${dialogTitle}`}>{LABELS.artifact.title}</h2>
+        <h2 className={`es-artifact__title ${dialogTitle}`}>
+          {initialFiles.length > 0 ? LABELS.artifact.updateTitle : LABELS.artifact.title}
+        </h2>
         <p className={`es-artifact__desc ${dialogDesc}`}>{LABELS.artifact.description}</p>
 
         {isGenerating ? (
@@ -223,10 +227,11 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
               />
             </div>
 
-            {files.length > 0 && (
+            <div className="es-artifact__documents">
+            {newFiles.length > 0 && (
               <div className="es-artifact__uploaded">
-                <div className={`es-artifact__uploaded-title ${bannerTitle}`}>{LABELS.artifact.uploaded}</div>
-                {files.map((f) => {
+                <div className={`es-artifact__uploaded-title ${bannerTitle}`}>{LABELS.artifact.newDocuments}</div>
+                {newFiles.map((f) => {
                   const extension = fileExtension(f.name);
                   return (
                     <div key={f.id} className="es-artifact__file">
@@ -269,6 +274,24 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
               </div>
             )}
 
+            {previousFiles.length > 0 && (
+              <div className="es-artifact__uploaded">
+                <div className={`es-artifact__uploaded-title ${bannerTitle}`}>{LABELS.artifact.previousDocuments}</div>
+                {previousFiles.map((f) => {
+                  const extension = fileExtension(f.name);
+                  return (
+                    <div key={f.id} className="es-artifact__file">
+                      <div className="es-artifact__file-icon"><FileTypeIcon extension={extension} /></div>
+                      <div className={bodyText}>{f.name}</div>
+                      <Badge variant={badgeVariant(extension)} fillStyle="subtle">{extension}</Badge>
+                      <ActionButton isQuiet aria-label={`Remove ${f.name}`} isDisabled={locked} onPress={() => removeFile(f)}><Close /></ActionButton>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            </div>
+
             {generateError && <div className="es-artifact__file-error">{generateError}</div>}
           </>
         )}
@@ -281,7 +304,7 @@ function ArtifactDialog({ onGenerate, onCancel, initialFiles = [], isGenerating 
             variant="primary"
             fillStyle="fill"
             isDisabled={!canGenerate}
-            onPress={() => onGenerate && onGenerate(files.filter((f) => f.status === 'ready'))}
+            onPress={() => onGenerate && onGenerate(readyNewFiles)}
           >
             {LABELS.artifact.generatePreRead}
           </Button>

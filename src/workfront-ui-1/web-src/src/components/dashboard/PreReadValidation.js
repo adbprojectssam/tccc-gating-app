@@ -91,6 +91,9 @@ function mergeDuplicateFields(fields) {
  */
 function PreReadValidation({
   fields = [],
+  drafts = [],
+  selectedDraftId = null,
+  onDraftChange,
   projectTitle,
   onViewPreRead,
   onUpdatePreRead,
@@ -100,7 +103,7 @@ function PreReadValidation({
 }) {
   const [entered, setEntered] = useState({}); // index → committed/resolved value
   const [openEditors, setOpenEditors] = useState({}); // index → editor/dropdown visible
-  const [drafts, setDrafts] = useState({}); // index → current free-text editor value
+  const [editorDrafts, setEditorDrafts] = useState({}); // index → current free-text editor value
   const [activeTab, setActiveTab] = useState('high');
 
   // One entry per field name (see mergeDuplicateFields) — everything below
@@ -124,11 +127,11 @@ function PreReadValidation({
 
   const openEditor = (i, f) => {
     setOpenEditors((p) => ({ ...p, [i]: true }));
-    setDrafts((p) => ({ ...p, [i]: p[i] ?? (hasValue(f) ? String(f.value) : '') }));
+    setEditorDrafts((p) => ({ ...p, [i]: p[i] ?? (hasValue(f) ? String(f.value) : '') }));
   };
-  const setDraft = (i, v) => setDrafts((p) => ({ ...p, [i]: v }));
+  const setDraft = (i, v) => setEditorDrafts((p) => ({ ...p, [i]: v }));
   const saveEditor = (i) => {
-    const v = String(drafts[i] ?? '').trim();
+    const v = String(editorDrafts[i] ?? '').trim();
     if (!v) return;
     setEntered((p) => ({ ...p, [i]: v }));
     setOpenEditors((p) => ({ ...p, [i]: false }));
@@ -248,7 +251,7 @@ function PreReadValidation({
           >
             <TextField
               aria-label={label}
-              value={drafts[i] ?? ''}
+              value={editorDrafts[i] ?? ''}
               onChange={(v) => setDraft(i, v)}
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
@@ -257,7 +260,7 @@ function PreReadValidation({
             <Button
               variant="primary"
               fillStyle="fill"
-              isDisabled={String(drafts[i] ?? '').trim() === ''}
+              isDisabled={String(editorDrafts[i] ?? '').trim() === ''}
               onPress={() => saveEditor(i)}
             >
               {LABELS.fieldReview.save}
@@ -277,10 +280,23 @@ function PreReadValidation({
       title={LABELS.fieldReview.title}
       subtitle={projectTitle}
       action={
-        <span className="es-gate1__version" aria-disabled="true">
-          <Text>{LABELS.fieldReview.versionPlaceholder}</Text>
-          <ChevronDown />
-        </span>
+        drafts.length > 0 ? (
+          <Picker
+            size="S"
+            aria-label={LABELS.fieldReview.versionPlaceholder}
+            selectedKey={selectedDraftId || drafts[drafts.length - 1].id}
+            onSelectionChange={onDraftChange}
+          >
+            {drafts.map((draft, index) => (
+              <PickerItem key={draft.id} id={draft.id}>{`${draft.label} ${index === drafts.length - 1 ? '(Current)' : ''}`.trim()}</PickerItem>
+            ))}
+          </Picker>
+        ) : (
+          <span className="es-gate1__version" aria-disabled="true">
+            <Text>{LABELS.fieldReview.versionPlaceholder}</Text>
+            <ChevronDown />
+          </span>
+        )
       }
     >
       {mergedFields.length === 0 ? (

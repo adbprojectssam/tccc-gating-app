@@ -47,8 +47,10 @@ const TASK_FIELDS = [
   "assignedToID",
   "DE:Gate Status",
   "DE:PMO Comments",
+  "parent:children",
   "actualCompletionDate",
   "plannedCompletionDate",
+  "parent:children:status",
   "DE:Gate Meeting Innovation",
   "DE:Build Stage Gate Report?",
 ].join(",");
@@ -178,6 +180,13 @@ async function main(params) {
         completed,
         status: details?.status || null,
         parentName: details?.parent?.name || null,
+        children: Array.isArray(details?.parent?.children)
+          ? details.parent.children.map((child) => ({
+              id: child.ID,
+              name: child.name,
+              status: child.status,
+            }))
+          : [],
         assignedToID: details?.assignedToID || null,
         pmoComments: details?.["DE:PMO Comments"] || null,
         actualCompletionDate: details?.actualCompletionDate || null,

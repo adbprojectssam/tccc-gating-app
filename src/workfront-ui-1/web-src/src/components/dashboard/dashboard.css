@@ -124,6 +124,10 @@
   margin-top: 2px;
 }
 
+.es-card__action button {
+  padding-inline: 16px;
+}
+
 /* ---------- Key Metrics ---------- */
 .es-metrics__grid {
   display: grid;
@@ -820,6 +824,47 @@
   margin-top: 8px;
 }
 
+.es-approver-dialog {
+  position: relative;
+  width: min(640px, calc(100vw - 32px));
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+}
+.es-approver-dialog__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.es-approver-dialog__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.es-approver-dialog__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 32px;
+  gap: 8px;
+  align-items: center;
+}
+.es-approver-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .es-approver-dialog {
+    width: calc(100vw - 16px);
+    padding: 24px 16px;
+  }
+  .es-approver-dialog__row {
+    grid-template-columns: 1fr 1fr 32px;
+  }
+}
+
 @media (max-width: 640px) {
   .es-artifact__documents {
     max-height: 280px;
@@ -1204,23 +1249,6 @@
 .es-gate-registration__meeting-details p {
   margin: 0;
 }
-.es-gate-registration__calendar-btn,
-.es-gate-registration__calendar-btn--added {
-  width: 100%;
-}
-.es-gate-registration__calendar-btn--added {
-  border-color: #079355 !important;
-  color: #079355 !important;
-}
-.es-gate-registration__calendar-btn--added svg {
-  --iconPrimary: #079355 !important;
-}
-.es-gate-registration__added {
-  margin: 0;
-  font-size: 12px;
-  color: #079355;
-}
-
 /* ---------- "Choose a Gate 1 event" registration modal ---------- */
 /* Inline card (Figma "gate-event-selector") — sits in the main gate-detail
    slot next to Gate Pipeline, NOT a modal/dialog. */
@@ -1296,26 +1324,37 @@
 }
 .es-ges__calendar-shell {
   display: grid;
-  grid-template-columns: 32px repeat(3, minmax(0, 1fr)) 32px;
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
   align-items: start;
   padding: 16px;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  position: relative;
 }
 .es-ges__calendar-shell > button {
   margin-top: 0;
-  min-width: 32px;
   width: 32px;
   height: 32px;
   padding: 0;
   align-self: start;
   border: none;
+  position: absolute;
+  top: 12px;
 }
+
+.es-ges__calendar-shell > button:first-of-type {
+  left: 12px;
+}
+
+.es-ges__calendar-shell > button:last-of-type {
+  right: 12px;
+}
+
 .es-ges__calendar-shell > button svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   --iconPrimary: #292929;
 }
 .es-ges__month {
@@ -1334,7 +1373,7 @@
 .es-ges__calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px 18px;
+  gap: 4px 12px;
   text-align: center;
   font-size: 12px;
   line-height: 16px;
@@ -1343,6 +1382,16 @@
   color: #505050;
   font-weight: 700;
 }
+
+.es-ges__calendar-weekdays span {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .es-ges__calendar-grid span {
   position: relative;
   min-height: 20px;

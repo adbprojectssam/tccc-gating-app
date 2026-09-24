@@ -118,7 +118,7 @@ function GateEventSelector({ gateNumber = '1', registrationLevel, registrationMa
     .filter((event) => eventFilter === 'all' || event.name === eventFilter)
     .filter((event) => gateFilter === 'all' || event.level === gateFilter)
     .filter((event) => isWithinDateRange(event.date, dateRange))
-    .sort((a, b) => a.date - b.date), [events, search, eventFilter, gateFilter, dateRange]);
+    .sort((a, b) => b.date - a.date), [events, search, eventFilter, gateFilter, dateRange]);
   const pageCount = Math.ceil(filteredEvents.length / RESULTS_PER_PAGE);
   const visibleEvents = filteredEvents.slice(
     (currentPage - 1) * RESULTS_PER_PAGE,

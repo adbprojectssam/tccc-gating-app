@@ -52,7 +52,7 @@ async function main(params) {
     }
 
     const searchParams = new URLSearchParams({
-      fields: "parameterValues:*,plannedCompletionDate",
+      fields: "parameterValues:*,plannedCompletionDate,owner:name",
       portfolioID: GATE1_PORTFOLIO_ID,
       templateID: GATE1_TEMPLATE_ID,
       status: "CPL",

@@ -5,9 +5,9 @@
 /**
  * Maps a Workfront (attask) project response into the dashboard `project`
  * shape consumed by <GatingDashboard>. Only fields the API actually provides
- * are populated; sections with no API source (Approval Trail, Gate Readiness,
- * AI Recommendation, Key KPIs, the tab panels, and per-gate pipeline statuses)
- * render as EMPTY STATES — present but with no rows/items.
+ * are populated; sections with no API source (Approval Trail, AI Recommendation,
+ * Key KPIs, and the tab panels) render as EMPTY STATES — present but with no
+ * rows/items. Gate Readiness is derived from each gate's child tasks.
  *
  * Static UI chrome (button/section labels, templates) comes from LABELS so it
  * stays consistent with the mock. Header CTAs are app chrome, so they are kept.
@@ -127,7 +127,51 @@ const PLACEHOLDER_APPROVAL_TRAIL = {
   ],
 };
 
-// Gate Readiness checklist (6 items, all complete).
+function approvalTrailForGate(g) {
+  return {
+    title: LABELS.sections.approvalTrail,
+    summary: g.completed ? formatLabel(LABELS.templates.countApproved, { completed: 0, total: 0 }) : '',
+    status: g.completed ? { tone: 'positive', label: LABELS.status.approved } : undefined,
+    headerAction: !g.completed ? { id: 'configure-approvers', label: LABELS.actions.configureApprovers, variant: 'primary', fillStyle: 'fill', icon: 'settings' } : undefined,
+    columns: APPROVAL_COLUMNS,
+    approvers: [],
+  };
+}
+
+const READINESS_LEGEND = [
+  { id: 'approved', label: LABELS.status.approved, tone: 'positive' },
+  { id: 'in-review', label: LABELS.status.inReview, tone: 'notice' },
+  { id: 'missing-overdue', label: LABELS.status.missingOverdue, tone: 'negative' },
+  { id: 'not-started', label: LABELS.status.notStarted, tone: 'neutral' },
+];
+
+function readinessFromChildren(children, gateTaskId) {
+  const items = (Array.isArray(children) ? children : [])
+    .filter((child) => {
+      const childTaskId = child.ID || child.id;
+      return childTaskId !== gateTaskId;
+    })
+    .map((child, index) => {
+    const status = String(child.status || '').toUpperCase();
+    const tone = status === 'CPL' ? 'positive' : status === 'INP' ? 'notice' : status === 'NEW' ? 'neutral' : 'negative';
+    return {
+      id: child.ID || child.id || `readiness-${index}`,
+      label: child.name || `Readiness item ${index + 1}`,
+      tone,
+      done: status === 'CPL',
+    };
+    });
+  const completed = items.filter((item) => item.done).length;
+  return {
+    title: LABELS.sections.gateReadiness,
+    completed,
+    total: items.length,
+    items,
+    legend: READINESS_LEGEND,
+  };
+}
+
+// Fallback for projects that do not yet expose child tasks.
 const PLACEHOLDER_READINESS = {
   title: LABELS.sections.gateReadiness,
   completed: 6,
@@ -140,6 +184,7 @@ const PLACEHOLDER_READINESS = {
     { id: 'launch-targets', label: 'Launch targets submitted', tone: 'positive' },
     { id: 'capacity', label: 'Capacity readiness', tone: 'positive' },
   ],
+  legend: READINESS_LEGEND,
 };
 
 export function mapWorkfrontProject(raw) {
@@ -350,11 +395,13 @@ export function mapWorkfrontProject(raw) {
         // Workfront field "DE:Gate Meeting Innovation" — empty/absent means
         // not registered) — drives the header's "Register for Gate N" CTA.
         gateMeetingRegistered: !!g.gateMeetingRegistered,
+        gateReadiness: g.children && g.children.length > 0
+          ? readinessFromChildren(g.children, g.id)
+          : PLACEHOLDER_READINESS,
         keyMetrics: { title: LABELS.sections.keyMetrics, metrics },
         gateDetail: buildGateDetail(g),
         ioFields,
-        approval: PLACEHOLDER_APPROVAL_TRAIL,
-        gateReadiness: PLACEHOLDER_READINESS,
+        approval: approvalTrailForGate(g),
       };
     }
   });

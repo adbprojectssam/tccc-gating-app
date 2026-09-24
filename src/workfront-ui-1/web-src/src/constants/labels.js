@@ -41,6 +41,15 @@ export const LABELS = {
     keyKpis: 'Key KPIs',
   },
 
+  approval: {
+    configureTitle: 'Configure approvers',
+    configureDescription: 'Assign approvers and adjust steps for this project.',
+    searchApprover: 'Search approver name',
+    addApprover: 'Add Approver',
+    save: 'Save',
+    saving: 'Saving…',
+  },
+
   // KPI metric names.
   metrics: {
     absoluteVolume: 'Absolute Volume',
@@ -230,8 +239,6 @@ export const LABELS = {
     viewGateDetails: 'View Gate Details',
     meetingTitle: 'Gate {number} Review Meeting',
     facilitatorLine: 'Facilitator: {name}',
-    addToCalendar: 'Add to calendar',
-    addedToCalendar: 'Added to your Outlook calendar.',
     modalTitle: 'Choose a Gate {number} event',
     back: 'Back',
     dateFilter: 'Date range',

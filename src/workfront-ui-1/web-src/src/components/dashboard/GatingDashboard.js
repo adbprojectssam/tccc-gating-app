@@ -26,6 +26,8 @@ import { getImsAuth } from '../../api/imsAuth';
 import { extractFields, submitValidatedFields } from '../../api/artifactClient';
 import { fetchProjectDocuments, findGatePreReadDocument } from '../../api/documentsClient';
 import { fetchGateEvents, filterEligibleGateEvents } from '../../api/gateEventsClient';
+import { fetchApprovers, assignApprovers } from '../../api/approversClient';
+import ApproverConfigDialog from './ApproverConfigDialog';
 import { LABELS, formatLabel } from '../../constants/labels';
 
 /**
@@ -88,6 +90,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const [gateMeetings, setGateMeetings] = useState([]);
   const [gateMeetingsLoading, setGateMeetingsLoading] = useState(true);
   const [gateMeetingsError, setGateMeetingsError] = useState('');
+  const [approvers, setApprovers] = useState([]);
+  const [isApproverDialogOpen, setApproverDialogOpen] = useState(false);
+  const [isSavingApprovers, setSavingApprovers] = useState(false);
+  const [approverError, setApproverError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -122,6 +128,14 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
     };
   }, [project?.registrationMatchFields]);
 
+  useEffect(() => {
+    let active = true;
+    getImsAuth().then((ctx) => fetchApprovers({ hostname: ctx.hostname, imsToken: ctx.imsToken, imsOrg: ctx.imsOrg }))
+      .then((users) => { if (active) setApprovers(users); })
+      .catch(() => { if (active) setApprovers([]); });
+    return () => { active = false; };
+  }, []);
+
   if (!project) return null;
 
   const gate = (project.gateData && project.gateData[selectedGate]) || {};
@@ -149,6 +163,33 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
       return;
     }
     if (onAction) onAction(id);
+  };
+
+  const handleApprovalAction = async (id) => {
+    if (id !== 'configure-approvers') return;
+    setApproverError('');
+    setApproverDialogOpen(true);
+  };
+
+  const handleSaveApprovers = async (rows) => {
+    if (!gate.id) return;
+    setSavingApprovers(true);
+    setApproverError('');
+    try {
+      const ctx = await getImsAuth();
+      await assignApprovers({
+        hostname: ctx.hostname,
+        taskId: gate.id,
+        approverIds: rows.map((row) => row.userId),
+        imsToken: ctx.imsToken,
+        imsOrg: ctx.imsOrg,
+      });
+      setApproverDialogOpen(false);
+    } catch (error) {
+      setApproverError(error.message);
+    } finally {
+      setSavingApprovers(false);
+    }
   };
 
   // Calls the extract-fields action with the given project/document ids.
@@ -397,7 +438,7 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
                   <BeyondTheSummary data={gate.beyondSummary} />
                   <IOFields data={gate.ioFields} />
                   <KeyKPIs data={gate.keyKpis} />
-                  <ApprovalTable data={gate.approval} />
+                  <ApprovalTable data={gate.approval} onHeaderAction={handleApprovalAction} />
                   <GateReadiness data={gate.gateReadiness} />
                 </>
               )}
@@ -414,6 +455,20 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
             onCancel={() => setArtifactOpen(false)}
             isGenerating={isExtracting}
             generateError={extractError}
+          />
+        )}
+      </DialogContainer>
+
+      <DialogContainer onDismiss={() => setApproverDialogOpen(false)}>
+        {isApproverDialogOpen && (
+          <ApproverConfigDialog
+            gateNumber={selectedGate}
+            taskId={gate.id}
+            users={approvers}
+            isSaving={isSavingApprovers}
+            error={approverError}
+            onCancel={() => setApproverDialogOpen(false)}
+            onSave={handleSaveApprovers}
           />
         )}
       </DialogContainer>

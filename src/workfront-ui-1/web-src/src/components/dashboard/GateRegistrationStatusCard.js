@@ -2,7 +2,6 @@
  * <license header>
  */
 
-import { useState } from 'react';
 import { Button, Text, Badge } from '@react-spectrum/s2';
 import Checkmark from '@react-spectrum/s2/icons/Checkmark';
 import CalendarEdit from '@react-spectrum/s2/icons/CalendarEdit';
@@ -31,9 +30,7 @@ function formatEventDate(date) {
  *  - Not yet registered (1849-101071): "Complete" badge, Register/View-Pre-read
  *    actions, and every saved artifact in a dashed "Generated Pre-read" box.
  *  - Registered for a Gate 1 event (1889-122628 / 1932-123418): "Registered"
- *    badge, a single "View Gate Details" action, and a meeting-details panel
- *    with an "Add to calendar" toggle (UI-only — no calendar integration
- *    exists yet, matching how registration itself has no backend persistence).
+ *    badge, a single "View Gate Details" action, and a meeting-details panel.
  */
 function GateRegistrationStatusCard({
   facilitatorName,
@@ -46,9 +43,8 @@ function GateRegistrationStatusCard({
   onViewGateDetails,
 }) {
   const R = LABELS.gateRegistration;
-  const [addedToCalendar, setAddedToCalendar] = useState(false);
-
   if (registeredEvent) {
+    const meetingOwner = registeredEvent.ownerName || facilitatorName;
     return (
       <section className="es-gate-registration">
         <div className="es-gate-registration__content">
@@ -62,7 +58,7 @@ function GateRegistrationStatusCard({
           <p className={`es-gate-registration__body ${dialogDesc}`}>
             {formatLabel(R.registeredBody, {
               date: formatEventDate(registeredEvent.date),
-              facilitator: facilitatorName,
+              facilitator: meetingOwner,
             })}
           </p>
 
@@ -81,18 +77,8 @@ function GateRegistrationStatusCard({
             <h3 className={boldLabelText}>{formatLabel(R.meetingTitle, { number: gateNumber })}</h3>
             <p className={detailText}>{registeredEvent.name}</p>
             <p className={detailText}>{formatEventDate(registeredEvent.date)}</p>
-            <p className={detailText}>{formatLabel(R.facilitatorLine, { name: facilitatorName })}</p>
+            <p className={detailText}>{formatLabel(R.facilitatorLine, { name: meetingOwner })}</p>
           </div>
-          <Button
-            variant="secondary"
-            fillStyle="outline"
-            UNSAFE_className={addedToCalendar ? 'es-gate-registration__calendar-btn--added' : 'es-gate-registration__calendar-btn'}
-            onPress={() => setAddedToCalendar(true)}
-          >
-            {addedToCalendar && <Checkmark aria-hidden="true" />}
-            <Text>{R.addToCalendar}</Text>
-          </Button>
-          {addedToCalendar && <p className="es-gate-registration__added">{R.addedToCalendar}</p>}
         </div>
       </section>
     );

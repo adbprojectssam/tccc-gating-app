@@ -52,6 +52,7 @@ function mapEvent(raw) {
     id: raw.ID,
     name: raw.name || '',
     date: parseWorkfrontDate(raw.plannedCompletionDate),
+    ownerName: raw.owner?.name || raw.ownerName || '',
     facilitator: pv['DE:Facilitator'] || raw.owner?.name || raw.ownerName || '',
     level,
     levelValue: level ? pv[LEVEL_FIELD[level]] : null,

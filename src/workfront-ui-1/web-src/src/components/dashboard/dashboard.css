@@ -843,6 +843,13 @@
   flex-direction: column;
   gap: 8px;
 }
+/* The native <h2>/<p> margins stack on top of the flex gap above (gap doesn't
+   collapse against element margins) — reset both so the 8px gap is the only
+   space between them. */
+.es-approver-dialog__header h2,
+.es-approver-dialog__header p {
+  margin: 0;
+}
 /* Figma 3285-80307: Title/XXL 22px/26px #131313 (already matches dialogTitle);
    description is Body/M 16px/1.5 #292929 — overrides the shared dialogDesc
    macro class (14px, subdued gray), which other dialogs use instead. */
@@ -859,7 +866,10 @@
   /* Exactly 5 rows visible (each 24px per Figma); the 6th+ scrolls. */
   max-height: calc(5 * 24px + 4 * 6px);
   overflow-y: auto;
-  padding-right: 2px;
+  /* Reserve the scrollbar's own space up front (rather than a token 2px) so
+     it never overlaps the row's remove button once scrolling kicks in. */
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
 .es-approver-dialog__row {
   display: flex;

@@ -143,7 +143,9 @@ function NewProjectView({
           ) : (
             <>
               <LockCard title={O.ioTitle} message={O.ioLocked} />
-              <LockCard title={LABELS.sections.approvalTrail} message={O.approvalNotInitialized} />
+              {registeredEvent && (
+                <LockCard title={LABELS.sections.approvalTrail} message={O.approvalNotInitialized} />
+              )}
             </>
           )}
         </div>

@@ -461,7 +461,10 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
                   <BeyondTheSummary data={gate.beyondSummary} />
                   <IOFields data={gate.ioFields} />
                   <KeyKPIs data={gate.keyKpis} />
-                  <ApprovalTable data={gate.approval} onHeaderAction={handleApprovalAction} />
+                  {/* Approval Trail only makes sense once the gate has an actual meeting to track. */}
+                  {(gate.gateMeetingRegistered || registeredEvent) && (
+                    <ApprovalTable data={gate.approval} onHeaderAction={handleApprovalAction} />
+                  )}
                   <GateReadiness data={gate.gateReadiness} />
                 </>
               )}

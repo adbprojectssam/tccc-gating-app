@@ -34,8 +34,10 @@ const errorBody = style({ font: "body", color: "neutral-subdued", maxWidth: 384 
  */
 const ProjectstatusMainMenuItem = () => {
   const [state, setState] = useState({ status: "loading" });
-  // Gating Assistant docked panel: open state + maximize (350 → 500). Its width
-  // is published as a CSS var on the shell so the dashboard reflows (pushes).
+  // Gating Assistant docked panel: open state + maximize. The reserved shell
+  // width only tracks `assistantOpen` — toggling maximize must never itself
+  // reflow the dashboard, so it doesn't factor into this at all; the wider
+  // maximized panel just overlaps the dashboard beyond the reserved 350px.
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantMax, setAssistantMax] = useState(false);
 
@@ -80,7 +82,7 @@ const ProjectstatusMainMenuItem = () => {
     );
   }
 
-  const assistantWidth = assistantOpen && !assistantMax ? 350 : 0;
+  const assistantWidth = assistantOpen ? 350 : 0;
 
   return (
     <div className="es-shell" style={{ "--es-assistant-w": `${assistantWidth}px` }}>

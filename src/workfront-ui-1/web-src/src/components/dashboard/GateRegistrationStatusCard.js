@@ -4,7 +4,6 @@
 
 import { Button, Text, Badge } from '@react-spectrum/s2';
 import Checkmark from '@react-spectrum/s2/icons/Checkmark';
-import CalendarEdit from '@react-spectrum/s2/icons/CalendarEdit';
 import Calendar from '@react-spectrum/s2/icons/Calendar';
 import FileText from '@react-spectrum/s2/icons/FileText';
 import { LABELS, formatLabel } from '../../constants/labels';
@@ -25,10 +24,14 @@ function formatEventDate(date) {
 }
 
 /**
- * Onboarding hero banner that replaces the upload prompt in <NewProjectView>
- * once the pre-read is confirmed. Two distinct layouts, both from Figma:
- *  - Not yet registered (1849-101071): "Complete" badge, Register/View-Pre-read
- *    actions, and every saved artifact in a dashed "Generated Pre-read" box.
+ * Success banner shown after a pre-read is submitted (any gate, not just a
+ * new project) — replaces <NewProjectView>'s upload prompt there, and takes
+ * over the regular exec dashboard's main gate-detail slot otherwise. Two
+ * distinct layouts, both from Figma:
+ *  - Not yet registered (3211-136600): "Pre-read generated" badge, a single
+ *    "View Pre-read" action, and every saved artifact in a dashed "Generated
+ *    Pre-read" box. (Registering is done via the header's own "Register for
+ *    Gate {number}" button, not duplicated here.)
  *  - Registered for a Gate 1 event (1889-122628 / 1932-123418): "Registered"
  *    badge, a single "View Gate Details" action, and a meeting-details panel.
  */
@@ -38,7 +41,6 @@ function GateRegistrationStatusCard({
   artifacts = [],
   preReadGenerated = false,
   registeredEvent,
-  onRegister,
   onViewPreRead,
   onViewGateDetails,
 }) {
@@ -91,15 +93,11 @@ function GateRegistrationStatusCard({
           <Checkmark aria-hidden="true" />
           <Text>{R.complete}</Text>
         </Badge>
-        <h2 className={`es-gate-registration__heading ${preReadPanelTitle}`}>{R.heading}</h2>
+        <h2 className={`es-gate-registration__heading ${preReadPanelTitle}`}>{formatLabel(R.heading, { number: gateNumber })}</h2>
         <p className={`es-gate-registration__body ${dialogDesc}`}>{R.body}</p>
 
         <div className="es-gate-registration__actions">
-          <Button variant="primary" fillStyle="fill" onPress={onRegister}>
-            <CalendarEdit />
-            <Text>{R.registerButton}</Text>
-          </Button>
-          <Button variant="primary" fillStyle="outline" onPress={onViewPreRead}>
+          <Button variant="primary" fillStyle="fill" onPress={onViewPreRead}>
             <Text>{R.viewPreRead}</Text>
           </Button>
         </div>

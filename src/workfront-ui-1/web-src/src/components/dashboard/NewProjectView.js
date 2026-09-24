@@ -72,7 +72,6 @@ function NewProjectView({
   gateNumber = '1',
   preReadGenerated,
   registeredEvent,
-  onRegister,
   onViewPreRead,
   readinessCard,
   mainSlotOverride,
@@ -137,7 +136,6 @@ function NewProjectView({
               preReadGenerated={preReadGenerated}
               artifacts={savedArtifacts}
               registeredEvent={registeredEvent}
-              onRegister={onRegister}
               onViewPreRead={onViewPreRead}
             />
           ) : readinessCard ? (

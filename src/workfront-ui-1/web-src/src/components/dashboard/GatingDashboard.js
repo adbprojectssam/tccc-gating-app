@@ -141,6 +141,20 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
   const gate = (project.gateData && project.gateData[selectedGate]) || {};
 
   const handleGateSelect = (id) => {
+    if (id !== selectedGate) {
+      // Switching gates: these screens replace the main gate-detail slot but
+      // aren't keyed per gate, so without this they'd keep showing the
+      // PREVIOUS gate's in-progress registration/pre-read-validation state
+      // instead of the newly selected gate's own default detail view.
+      setRegistering(false);
+      setFields([]);
+      setDraftVersions([]);
+      setSelectedDraftId(null);
+      setPreReadSubmitted(false);
+      setSavedArtifacts([]);
+      setExtractError('');
+      setSubmitError('');
+    }
     setSelectedGate(id);
     if (onGateSelect) onGateSelect(id);
   };
@@ -352,10 +366,12 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
 
   // Takes over the main gate-detail slot (next to Gate Pipeline) ahead of
   // everything else — the event selector while choosing (Figma 1889-121823 /
-  // 1889-121630 / 1889-121287, inline, not a modal), then the "registered"
-  // status card once one's been picked (Figma 1889-121384 / 1889-121464).
-  // Shared between the new-project and regular exec layouts so there's one
-  // implementation of each state.
+  // 1889-121630 / 1889-121287, inline, not a modal), then the "just
+  // submitted" success card (Figma 3211-136600) once a pre-read is shared,
+  // and finally the "registered" status card once a Gate event's been
+  // picked (Figma 1889-121384 / 1889-121464). Shared between the
+  // new-project and regular exec layouts so there's one implementation of
+  // each state.
   const mainSlotOverride = registeredEvent ? (
     <GateRegistrationStatusCard
       facilitatorName={project.ownerName}
@@ -376,6 +392,14 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           return next;
         });
       }}
+    />
+  ) : preReadSubmitted ? (
+    <GateRegistrationStatusCard
+      facilitatorName={project.ownerName}
+      gateNumber={selectedGate}
+      preReadGenerated={!!gate.preReadGenerated}
+      artifacts={savedArtifacts}
+      onViewPreRead={() => handleAction('pre-read')}
     />
   ) : null;
 
@@ -415,7 +439,6 @@ function GatingDashboard({ project, onAction, onGateSelect, onProjectRefresh }) 
           gateNumber={selectedGate}
           preReadGenerated={!!gate.preReadGenerated}
           registeredEvent={registeredEvent}
-          onRegister={() => setRegistering(true)}
           onViewPreRead={() => handleAction('pre-read')}
           readinessCard={readinessCard}
           mainSlotOverride={mainSlotOverride}

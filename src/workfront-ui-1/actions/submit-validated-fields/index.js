@@ -15,20 +15,34 @@
  * signed-in user's own org — same pattern as the `chat` and `extract-fields`
  * actions. Secured with require-adobe-auth.
  */
-const fetch = require("node-fetch");
+/*
+ * <license header>
+ */
+
+/**
+ * submit-validated-fields — kicks off the field-submission agent call and
+ * returns immediately with a `jobId` (the worker's own OpenWhisk activation
+ * id); the frontend polls `submit-validated-fields-status` for the eventual
+ * result.
+ *
+ * This does no agent work itself. Adobe I/O Runtime enforces a hard 60s
+ * ceiling on BLOCKING web-action HTTP calls — confirmed against Adobe's own
+ * docs — that `limits.timeout` cannot raise (a higher configured value is
+ * silently ignored for blocking calls), and the agent's write-back pass can
+ * easily exceed 60s. So this action invokes
+ * `submit-validated-fields-worker` NON-BLOCKING (which, as a non-blocking
+ * activation, can run up to 3 hours) and returns right away — well within
+ * the 60s window. The result is read back later straight off that
+ * activation's own record (see submit-validated-fields-status) rather than
+ * a separate store. Secured with require-adobe-auth.
+ */
+const openwhisk = require("openwhisk");
 const { Core } = require("@adobe/aio-sdk");
 const {
   errorResponse,
   stringParameters,
   checkMissingRequestInputs,
 } = require("../utils");
-
-const SUBMIT_ENDPOINT =
-  "https://agents.automations.adobe.com/api/v3/agents/01a0aae7-412b-737a-8024-b63bd83eae5f/api";
-
-// The org that OWNS the agent (from the working cURL). The request must be made
-// in this org's context regardless of the signed-in user's own org.
-const AGENT_ORG_ID = "9075A2B154DE8AF80A4C98A7@AdobeOrg";
 
 async function main(params) {
   const logger = Core.Logger("submit-validated-fields", {
@@ -56,33 +70,23 @@ async function main(params) {
     );
     if (!token) return errorResponse(401, "missing IMS token", logger);
 
-    const res = await fetch(SUBMIT_ENDPOINT, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-gw-ims-org-id": AGENT_ORG_ID,
-        "x-headless-integration": "true",
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const ow = openwhisk();
+    const invoked = await ow.actions.invoke({
+      name: "tccc-gating/submit-validated-fields-worker",
+      params: {
+        fields,
+        taskId: params.taskId,
+        imsToken: token,
       },
-      body: JSON.stringify({
-        fields_payload: JSON.stringify(fields),
-        workfront_task_id: params.taskId,
-      }),
+      blocking: false,
     });
-    const body = await res.json().catch(() => null);
-    if (!res.ok) {
-      const detail =
-        (body && (body.error?.message || body.message)) ||
-        `status ${res.status}`;
-      return errorResponse(
-        res.status && res.status >= 400 ? res.status : 502,
-        `Field submission error: ${detail}`,
-        logger,
-      );
+    const jobId = invoked && invoked.activationId;
+    if (!jobId) {
+      return errorResponse(502, "Could not start the submission job", logger);
     }
 
-    return { statusCode: 200, body: { data: body } };
+    logger.info(`Started submission job ${jobId}`);
+    return { statusCode: 200, body: { data: { jobId } } };
   } catch (error) {
     logger.error(error);
     const detail = error && error.message ? error.message : "server error";
@@ -91,3 +95,4 @@ async function main(params) {
 }
 
 exports.main = main;
+

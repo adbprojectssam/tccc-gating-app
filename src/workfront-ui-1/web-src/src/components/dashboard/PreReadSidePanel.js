@@ -163,15 +163,6 @@ function PreReadSidePanel({
                     ))}
                   </div>
                 </section>
-
-                <section className="es-preread-panel__section">
-                  <h3 className={preReadSectionTitle}>{LABELS.preReadPanel.source}</h3>
-                  {summary.sourceFiles.map((file) => (
-                    <p key={file} className={preReadValueText}>
-                      {file}
-                    </p>
-                  ))}
-                </section>
               </div>
             </>
           )}

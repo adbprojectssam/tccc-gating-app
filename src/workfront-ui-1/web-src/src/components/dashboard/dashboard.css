@@ -826,7 +826,7 @@
 
 .es-approver-dialog {
   position: relative;
-  width: min(640px, calc(100vw - 32px));
+  height: 100%;
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -838,30 +838,56 @@
   top: 12px;
   right: 12px;
 }
-.es-approver-dialog__rows {
+.es-approver-dialog__header {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+/* Figma 3285-80307: Title/XXL 22px/26px #131313 (already matches dialogTitle);
+   description is Body/M 16px/1.5 #292929 — overrides the shared dialogDesc
+   macro class (14px, subdued gray), which other dialogs use instead. */
+.es-approver-dialog__header p {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  color: #292929 !important;
+}
+.es-approver-dialog__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Exactly 5 rows visible (each 24px per Figma); the 6th+ scrolls. */
+  max-height: calc(5 * 24px + 4 * 6px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
 .es-approver-dialog__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 32px;
-  gap: 8px;
+  display: flex;
   align-items: center;
+  gap: 6px;
+}
+/* Picker (S) renders with a gray fill and no border by default — Figma wants
+   a white field with a visible 2px border, matching the SearchField next to it. */
+.es-approver-dialog__row button[aria-haspopup='listbox'] {
+  background: #fff !important;
+  border: 2px solid #dadada !important;
 }
 .es-approver-dialog__footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 8px;
+  /* Pinned to the bottom of the dialog even when CustomDialog's own shell is
+     taller than the content (few rows) — see height:100% above. */
+  margin-top: auto;
+}
+.es-approver-dialog__actions {
+  display: flex;
+  gap: 12px;
 }
 @media (max-width: 640px) {
   .es-approver-dialog {
-    width: calc(100vw - 16px);
     padding: 24px 16px;
-  }
-  .es-approver-dialog__row {
-    grid-template-columns: 1fr 1fr 32px;
   }
 }
 
@@ -1004,12 +1030,6 @@
   --iconPrimary: #8f8f8f !important;
 }
 
-/* Unresolved Missing Data cards default to variant="negative" (red alert
-   triangle) for the auto-icon — override to match the tab's neutral gray. */
-.es-gate1__missing-icon svg {
-  --iconPrimary: #8f8f8f !important;
-}
-
 .es-gate1__enter {
   display: inline-block;
   align-self: flex-start;
@@ -1025,6 +1045,11 @@
   color: #292929;
   text-decoration: underline;
 }
+.es-gate1__enter:disabled {
+  color: #b7b7b7;
+  cursor: default;
+  text-decoration: none;
+}
 .es-gate1__editor {
   display: flex;
   align-items: center;
@@ -1034,9 +1059,61 @@
 .es-gate1__conflict-picker {
   margin-top: 12px;
 }
+/* Two-value conflicts render as labeled radio rows instead of a picker,
+   matching Figma 2850-115001. */
+.es-gate1__conflict-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+.es-gate1__conflict-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.es-gate1__conflict-row-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6d6d6d;
+}
+.es-gate1__conflict-radio-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border: 1px solid #dadada;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  color: #292929;
+  cursor: pointer;
+}
+.es-gate1__conflict-radio-field input[type='radio'] {
+  margin: 0;
+  cursor: pointer;
+}
+.es-gate1__conflict-caption {
+  font-size: 12px;
+  color: #6d6d6d;
+}
+.es-gate1__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
 .es-gate1__editor > :first-child {
   flex: 1 1 auto;
   min-width: 0;
+}
+/* Low-confidence editing / Missing Data cards: plain (unaccented) card —
+   no InlineAlert icon/border color, matching Figma's editing states. */
+.es-gate1__card-plain {
+  padding: 16px;
+  border: 1px solid #dadada;
+  border-radius: 8px;
+  background: #fff;
 }
 
 /* ---------- New-project onboarding banner ---------- */

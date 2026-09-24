@@ -2,8 +2,10 @@
  * <license header>
  *
  * Gating Assistant — docked right rail (Figma node 2318:133342). Opening it
- * pushes the dashboard (the shell adds right padding equal to the panel width);
- * the Maximize toggle grows it from 350px to 500px.
+ * pushes the dashboard (the shell adds right padding equal to the panel's base
+ * width). The Maximize toggle grows the panel wider without ever changing that
+ * reserved padding — it overlaps the dashboard instead of reflowing it, and
+ * stays right-docked rather than becoming a centered modal.
  */
 
 /* ---------- Launcher (closed state) — round dark toggle (prototype .ai-btn) ---------- */
@@ -40,6 +42,7 @@
   right: 0;
   height: 100vh;
   width: 350px;
+  min-width: 350px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -52,23 +55,14 @@
   border-top-right-radius: 8px;
 }
 
+/* Expanded ("Maximize") state: previously a centered modal with a dimming
+   underlay. Now it stays right-docked like the base panel and just grows
+   wider, overlapping the dashboard beyond the reserved 350px — the shell's
+   reserved width (--es-assistant-w) never changes on this toggle, so it
+   never reflows the dashboard (see ProjectstatusMainMenuItem). */
 .es-ga--max {
-  top: 12px;
-  right: 50%;
-  width: min(744px, calc(100vw - 24px));
-  height: calc(100vh - 24px);
-  max-height: calc(100vh - 24px);
-  transform: translateX(50%);
-  border: 1px solid #e1e1e1;
-  border-radius: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-}
-
-.es-ga__underlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: rgba(0, 0, 0, 0.18);
+  width: 744px;
+  min-width: 744px;
 }
 
 /* ---------- Header (dark) ---------- */

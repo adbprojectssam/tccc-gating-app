@@ -99,9 +99,11 @@ function toClipboardText(content) {
 
 /**
  * Gating Assistant — the Figma docked side panel (right rail). Opening it pushes
- * the dashboard (the shell adds right padding); a Maximize toggle grows it from
- * 350px to 500px. Streams from the agent API (shared with the legacy
- * ChatWidget's clients); the response markdown drives the panel content.
+ * the dashboard (the shell adds right padding); the Maximize toggle grows the
+ * panel wider in place (still right-docked, no modal/backdrop) without ever
+ * changing that reserved padding, so expanding never itself reflows the
+ * dashboard. Streams from the agent API (shared with the legacy ChatWidget's
+ * clients); the response markdown drives the panel content.
  */
 function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClose, onToggleMaximize }) {
   const [messages, setMessages] = useState([]);
@@ -301,7 +303,6 @@ function GatingAssistant({ open, maximized, subtitle, portfolioId, onOpen, onClo
 
   return (
     <>
-      {maximized && <div className="es-ga__underlay" aria-hidden="true" />}
       <aside
         className={maximized ? 'es-ga es-ga--max' : 'es-ga'}
         role="dialog"

@@ -98,6 +98,26 @@ runtimeManifest:
           annotations:
             require-adobe-auth: true
             final: true
+        # Not a web action — only ever invoked action-to-action (non-blocking)
+        # by submit-validated-fields, via the OpenWhisk API. Can run up to 3
+        # hours since it's a non-blocking activation, unlike a blocking
+        # web-action HTTP call (hard-capped at 60s regardless of limits.timeout).
+        submit-validated-fields-worker:
+          function: actions/submit-validated-fields-worker/index.js
+          runtime: nodejs:18
+          limits:
+            timeout: 300000
+          inputs:
+            LOG_LEVEL: info
+        submit-validated-fields-status:
+          function: actions/submit-validated-fields-status/index.js
+          web: 'yes'
+          runtime: nodejs:18
+          inputs:
+            LOG_LEVEL: info
+          annotations:
+            require-adobe-auth: true
+            final: true
         chat:
           function: actions/chat/index.js
           web: 'yes'

@@ -177,25 +177,48 @@ export async function extractFields({ projectId, documentIds, imsToken, imsOrg }
   throw new Error('Field extraction is taking longer than expected. Please try again.');
 }
 
+// Polling cadence + overall budget for submit-validated-fields-status. Same
+// 60s blocking-call ceiling as extract-fields applies here — see above.
+const SUBMIT_POLL_INTERVAL_MS = 3000;
+const SUBMIT_POLL_TIMEOUT_MS = 6 * 60 * 1000;
+
 /**
  * Submit the validated field list (high-confidence fields, plus anything the
  * user confirmed/entered on the Pre-read Validation screen) for the given
- * Workfront task, via the `submit-validated-fields` action. `fields` is
- * `[{ field, value }]`. Throws on error.
+ * Workfront task. Kicks off the job via `submit-validated-fields`, then polls
+ * `submit-validated-fields-status` until the background worker finishes.
+ * `fields` is `[{ field, value }]`. Throws on error, or if the job doesn't
+ * finish within the poll budget.
  */
 export async function submitValidatedFields({ fields, taskId, imsToken, imsOrg }) {
-  const actionUrl = resolveUrl('submit-validated-fields');
-  if (!actionUrl) throw new Error('submit-validated-fields action is not configured — build the app');
+  const startUrl = resolveUrl('submit-validated-fields');
+  if (!startUrl) throw new Error('submit-validated-fields action is not configured — build the app');
+  const statusUrl = resolveUrl('submit-validated-fields-status');
+  if (!statusUrl) throw new Error('submit-validated-fields-status action is not configured — build the app');
 
-  const result = await actionWebInvoke(actionUrl, authHeaders(imsToken, imsOrg), {
+  const started = await actionWebInvoke(startUrl, authHeaders(imsToken, imsOrg), {
     fields,
     taskId,
   });
-  if (!result || result.error) {
-    const detail = (result && result.error && (result.error.error || result.error)) || 'unknown error';
+  if (!started || started.error || !started.data || !started.data.jobId) {
+    const detail = (started && started.error && (started.error.error || started.error)) || 'unknown error';
     throw new Error(`Field submission failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
   }
-  return result.data;
+  const { jobId } = started.data;
+
+  const deadline = Date.now() + SUBMIT_POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await delay(SUBMIT_POLL_INTERVAL_MS);
+    const poll = await actionWebInvoke(statusUrl, authHeaders(imsToken, imsOrg), { jobId });
+    if (!poll || poll.error || !poll.data) {
+      const detail = (poll && poll.error && (poll.error.error || poll.error)) || 'unknown error';
+      throw new Error(`Field submission failed: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`);
+    }
+    if (poll.data.status === 'done') return poll.data.data;
+    if (poll.data.status === 'error') throw new Error(poll.data.error || 'Field submission failed');
+    // status === 'pending' — keep polling.
+  }
+  throw new Error('Field submission is taking longer than expected. Please try again.');
 }
 
 /** Delete a Workfront document by id. Throws on error. */

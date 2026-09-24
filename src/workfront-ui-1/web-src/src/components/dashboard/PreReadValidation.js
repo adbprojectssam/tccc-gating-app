@@ -52,7 +52,14 @@ function mergeDuplicateFields(fields) {
   });
   return order.map((key) => {
     const group = byField.get(key);
-    if (group.length === 1) return group[0];
+    if (group.length === 1) {
+      const item = group[0];
+      const conflictValues = [item.workfrontValue, ...(Array.isArray(item.conflictValues) ? item.conflictValues : []), item.value]
+        .filter((value) => value != null && String(value).trim() !== '')
+        .map(String)
+        .filter((value, index, values) => values.indexOf(value) === index);
+      return { ...item, conflictValues };
+    }
     const values = group.map((f) => f.value).filter((v) => v != null && String(v).trim() !== '');
     const confidence = group.reduce((min, f) => Math.min(min, Number(f.confidence) || 0), Infinity);
     const workfrontValue = group.map((f) => f.workfrontValue).find((v) => v != null && String(v).trim() !== '');
@@ -61,6 +68,10 @@ function mergeDuplicateFields(fields) {
       value: values.length ? values.join('; ') : null,
       confidence: Number.isFinite(confidence) ? confidence : 0,
       workfrontValue,
+      conflictValues: [workfrontValue, ...values]
+        .filter((value) => value != null && String(value).trim() !== '')
+        .map(String)
+        .filter((value, index, allValues) => allValues.indexOf(value) === index),
     };
   });
 }
@@ -136,9 +147,13 @@ function PreReadValidation({
     setEntered((p) => ({ ...p, [i]: v }));
     setOpenEditors((p) => ({ ...p, [i]: false }));
   };
-  const resolveConflict = (i, value) => {
-    setEntered((p) => ({ ...p, [i]: value }));
+  const cancelEditor = (i) => {
     setOpenEditors((p) => ({ ...p, [i]: false }));
+    setEditorDrafts((p) => {
+      const next = { ...p };
+      delete next[i];
+      return next;
+    });
   };
 
   const buckets = { high: [], low: [], conflict: [], missing: [] };
@@ -166,6 +181,15 @@ function PreReadValidation({
           <Content UNSAFE_className="es-gate1__card-body">
             {formatLabel(LABELS.fieldReview.valueLine, { value: displayValue(f, i) })}
           </Content>
+          {openEditors[i] ? (
+            <div className="es-gate1__editor">
+              <TextField aria-label={label} value={editorDrafts[i] ?? ''} onChange={(value) => setDraft(i, value)} autoFocus styles={fullWidth} />
+              <Button variant="secondary" fillStyle="outline" onPress={() => cancelEditor(i)}>{LABELS.fieldReview.cancel}</Button>
+              <Button variant="primary" fillStyle="fill" isDisabled={String(editorDrafts[i] ?? '').trim() === ''} onPress={() => saveEditor(i)}>{LABELS.fieldReview.save}</Button>
+            </div>
+          ) : (
+            <button type="button" className="es-gate1__enter" onClick={() => openEditor(i, f)}>{LABELS.fieldReview.edit}</button>
+          )}
         </InlineAlert>
       );
     }
@@ -185,61 +209,57 @@ function PreReadValidation({
       );
     }
 
+    // Conflicts render their resolver inline immediately (no collapsed
+    // trigger link, per Figma 2850-115001 / 2992-136650) — the card is
+    // always "in progress" until a value is confirmed, since there's no
+    // single value to show at rest.
     if (bucket === 'conflict') {
+      const options = f.conflictValues || [f.workfrontValue, f.value].filter(Boolean).map(String);
+      const isWorkfrontValue = (value) => f.workfrontValue != null && String(f.workfrontValue).trim() === String(value).trim();
+      const defaultValue = options.find((value) => !isWorkfrontValue(value)) || options[0] || '';
+      const selectedValue = editorDrafts[i] ?? defaultValue;
       return (
         <InlineAlert key={i} variant="negative" styles={fullWidth}>
           <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
-          <Content UNSAFE_className="es-gate1__card-body">
-            {formatLabel(LABELS.fieldReview.conflictHint, { workfrontValue: f.workfrontValue, value: f.value })}
-          </Content>
-          {openEditors[i] ? (
-            <Picker
-              aria-label={formatLabel(LABELS.fieldReview.resolveAriaLabel, { label })}
-              styles={fullWidth}
-              UNSAFE_className="es-gate1__conflict-picker"
-              // eslint-disable-next-line jsx-a11y/no-autofocus
-              autoFocus
-              onSelectionChange={(key) => resolveConflict(i, String(key))}
-            >
-              <PickerItem id={String(f.workfrontValue)}>
-                {formatLabel(LABELS.fieldReview.conflictOptionWorkfront, { value: f.workfrontValue })}
-              </PickerItem>
-              <PickerItem id={String(f.value)}>
-                {formatLabel(LABELS.fieldReview.conflictOptionDoc, { value: f.value })}
-              </PickerItem>
-            </Picker>
+          {options.length <= 2 ? (
+            <div className="es-gate1__conflict-rows" role="radiogroup" aria-label={formatLabel(LABELS.fieldReview.resolveAriaLabel, { label })}>
+              {options.map((value) => {
+                const wf = isWorkfrontValue(value);
+                const selected = selectedValue === value;
+                return (
+                  <div className="es-gate1__conflict-row" key={value}>
+                    <span className="es-gate1__conflict-row-label">{wf ? LABELS.fieldReview.conflictWorkfrontLabel : LABELS.fieldReview.conflictDocLabel}</span>
+                    <label className="es-gate1__conflict-radio-field">
+                      <input type="radio" name={`es-gate1-conflict-${i}`} checked={selected} onChange={() => setDraft(i, value)} />
+                      <span>{value}</span>
+                    </label>
+                    {!wf && f.docName && selected && (
+                      <span className="es-gate1__conflict-caption">{formatLabel(LABELS.fieldReview.foundIn, { doc: f.docName })}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <button
-              type="button"
-              className="es-gate1__enter"
-              onClick={() => setOpenEditors((p) => ({ ...p, [i]: true }))}
-            >
-              {LABELS.fieldReview.resolveConflict}
-            </button>
+            <Picker aria-label={formatLabel(LABELS.fieldReview.resolveAriaLabel, { label })} selectedKey={selectedValue || null} styles={fullWidth} UNSAFE_className="es-gate1__conflict-picker" onSelectionChange={(key) => setDraft(i, String(key))}>
+              {options.map((value) => (
+                <PickerItem key={value} id={value}>
+                  {formatLabel(isWorkfrontValue(value) ? LABELS.fieldReview.conflictOptionWorkfront : LABELS.fieldReview.conflictOptionDoc, { value })}
+                </PickerItem>
+              ))}
+            </Picker>
           )}
+          <button type="button" className="es-gate1__enter" disabled={!selectedValue} onClick={() => setEntered((p) => ({ ...p, [i]: selectedValue }))}>{LABELS.fieldReview.confirmValue}</button>
         </InlineAlert>
       );
     }
 
-    const missing = bucket === 'missing';
-    return (
-      <InlineAlert
-        key={i}
-        variant={missing ? 'negative' : 'notice'}
-        styles={fullWidth}
-        UNSAFE_className={missing ? 'es-gate1__missing-icon' : undefined}
-      >
-        <Heading UNSAFE_className="es-gate1__card-title">
-          {missing ? `${label}${LABELS.fieldReview.missingSuffix}` : label}
-        </Heading>
-        <Content UNSAFE_className="es-gate1__card-body">
-          {missing
-            ? LABELS.fieldReview.missingHint
-            : formatLabel(LABELS.fieldReview.confidenceHint, {
-                percent: Math.round((Number(f.confidence) || 0) * 100),
-              })}
-        </Content>
-        {openEditors[i] ? (
+    if (bucket === 'missing') {
+      // No collapsed state — there's no existing value to show at rest, so
+      // the entry field is always visible (Figma 2992-132927).
+      return (
+        <div key={i} className="es-gate1__card-plain">
+          <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
           <div
             className="es-gate1__editor"
             onKeyDown={(e) => {
@@ -249,6 +269,24 @@ function PreReadValidation({
               }
             }}
           >
+            <TextField aria-label={label} placeholder={LABELS.fieldReview.enterValue} value={editorDrafts[i] ?? ''} onChange={(v) => setDraft(i, v)} styles={fullWidth} />
+          </div>
+          <div className="es-gate1__editor-actions">
+            <Button variant="secondary" fillStyle="outline" onPress={() => setDraft(i, '')}>{LABELS.fieldReview.cancel}</Button>
+            <Button variant="primary" fillStyle="fill" isDisabled={String(editorDrafts[i] ?? '').trim() === ''} onPress={() => saveEditor(i)}>{LABELS.fieldReview.save}</Button>
+          </div>
+        </div>
+      );
+    }
+
+    // Low confidence: collapsed "Review" card until opened, then a plain
+    // (unaccented) editor card with the confidence caption below the field
+    // and a "Confirm value" button (Figma 2992-130940).
+    if (openEditors[i]) {
+      return (
+        <div key={i} className="es-gate1__card-plain">
+          <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
+          <div className="es-gate1__editor">
             <TextField
               aria-label={label}
               value={editorDrafts[i] ?? ''}
@@ -257,20 +295,24 @@ function PreReadValidation({
               autoFocus
               styles={fullWidth}
             />
-            <Button
-              variant="primary"
-              fillStyle="fill"
-              isDisabled={String(editorDrafts[i] ?? '').trim() === ''}
-              onPress={() => saveEditor(i)}
-            >
-              {LABELS.fieldReview.save}
-            </Button>
           </div>
-        ) : (
-          <button type="button" className="es-gate1__enter" onClick={() => openEditor(i, f)}>
-            {missing ? LABELS.fieldReview.enterValue : LABELS.fieldReview.confirmValue}
-          </button>
-        )}
+          <Content UNSAFE_className="es-gate1__card-body">
+            {formatLabel(LABELS.fieldReview.confidenceCaption, { percent: Math.round((Number(f.confidence) || 0) * 100) })}
+          </Content>
+          <div className="es-gate1__editor-actions">
+            <Button variant="secondary" fillStyle="outline" onPress={() => cancelEditor(i)}>{LABELS.fieldReview.cancel}</Button>
+            <Button variant="primary" fillStyle="fill" isDisabled={String(editorDrafts[i] ?? '').trim() === ''} onPress={() => saveEditor(i)}>{LABELS.fieldReview.confirmValue}</Button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <InlineAlert key={i} variant="notice" styles={fullWidth}>
+        <Heading UNSAFE_className="es-gate1__card-title">{label}</Heading>
+        <Content UNSAFE_className="es-gate1__card-body">
+          {formatLabel(LABELS.fieldReview.confidenceHint, { percent: Math.round((Number(f.confidence) || 0) * 100) })}
+        </Content>
+        <button type="button" className="es-gate1__enter" onClick={() => openEditor(i, f)}>{LABELS.fieldReview.review}</button>
       </InlineAlert>
     );
   };

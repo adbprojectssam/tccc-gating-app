@@ -20,6 +20,8 @@ export const fullWidth = style({ width: 'full' });
 export const progressWidth = style({ width: 250 });
 /* Pre-read panel empty-state "Generate Pre-read" button — fixed 240px per Figma. */
 export const generateButtonWidth = style({ width: 240 });
+/* Configure Approvers row fields (Picker/SearchField) — fixed 192px per Figma 3285-80307. */
+export const approverFieldWidth = style({ width: 192 });
 
 /* Root: Spectrum font family + base neutral text color, inherited by every
    custom text element (fixes the missing Adobe Clean font family). */
